@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+</head>
+<body>
+<main class="shell wide-shell">
+    <div class="row between">
+        <h1>Inventory Operations</h1>
+        <a th:href="@{/dashboard}">Back to dashboard</a>
+    </div>
+
+    <section class="status-block">
+        <h2>Master Data</h2>
+        <div class="grid-2">
+            <form method="post" th:action="@{/inventory/unit}" class="grid-form compact-form">
+                <h3>Unit</h3>
+                <input name="unitCode" placeholder="EA" required>
+                <input name="unitName" placeholder="Each" required>
+                <input name="unitType" placeholder="COUNT/WEIGHT/VOLUME/PACKAGE" required>
+                <label><input type="checkbox" name="baseUnit"> Base unit</label>
+                <button type="submit">Create Unit</button>
+            </form>
+            <form method="post" th:action="@{/inventory/conversion}" class="grid-form compact-form">
+                <h3>Multi-Unit Conversion</h3>
+                <input type="number" name="fromUnitId" placeholder="From Unit ID" required>
+                <input type="number" name="toUnitId" placeholder="To Unit ID" required>
+                <input type="number" step="0.000001" name="factor" placeholder="Factor" required>
+                <button type="submit">Create Conversion</button>
+            </form>
+            <form method="post" th:action="@{/inventory/ingredient}" class="grid-form compact-form">
+                <h3>Ingredient</h3>
+                <input name="ingredientCode" placeholder="TOMATO" required>
+                <input name="ingredientName" placeholder="Tomato" required>
+                <input type="number" name="defaultUnitId" placeholder="Default Unit ID" required>
+                <button type="submit">Create Ingredient</button>
+            </form>
+            <form method="post" th:action="@{/inventory/batch}" class="grid-form compact-form">
+                <h3>Receive Batch + Shelf-life</h3>
+                <input type="number" name="ingredientId" placeholder="Ingredient ID" required>
+                <input name="batchNo" placeholder="Batch No" required>
+                <input type="number" step="0.001" name="quantity" placeholder="Quantity" required>
+                <input type="number" name="unitId" placeholder="Unit ID" required>
+                <input type="number" step="0.0001" name="unitCost" placeholder="Unit Cost" required>
+                <input type="date" name="expiresAt" required>
+                <button type="submit">Receive Batch</button>
+            </form>
+        </div>
+    </section>
+
+    <section class="status-block">
+        <h2>FIFO Issue / Mandatory Loss Reason</h2>
+        <form method="post" th:action="@{/inventory/issue}" class="grid-form">
+            <div class="grid-2">
+                <input type="number" name="ingredientId" placeholder="Ingredient ID" required>
+                <select name="transactionType">
+                    <option>ISSUE</option>
+                    <option>LOSS</option>
+                    <option>ADJUSTMENT</option>
+                </select>
+                <input type="number" step="0.001" name="quantity" placeholder="Quantity" required>
+                <input type="number" name="unitId" placeholder="Unit ID" required>
+                <select name="lossReasonCode">
+                    <option value="">Loss reason (required only for LOSS)</option>
+                    <option>SPOILAGE</option>
+                    <option>DAMAGE</option>
+                    <option>THEFT</option>
+                    <option>PREP_WASTE</option>
+                </select>
+                <input name="note" placeholder="Note">
+            </div>
+            <button type="submit">Post FIFO Transaction</button>
+        </form>
+    </section>
+
+    <section class="status-block">
+        <h2>Stock Count + Variance Thresholds</h2>
+        <form method="post" th:action="@{/inventory/stock-count}" class="inline-form">
+            <input type="number" name="ingredientId" placeholder="Ingredient ID" required>
+            <input type="number" step="0.001" name="actualQty" placeholder="Actual Qty" required>
+            <input type="number" name="actualUnitId" placeholder="Actual Unit ID" required>
+            <button type="submit">Record Stock Count</button>
+        </form>
+        <p>Variance flags trigger when over 2% or over $50.00.</p>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Count No</th>
+                <th>Ingredient</th>
+                <th>Expected</th>
+                <th>Actual</th>
+                <th>Variance %</th>
+                <th>Variance $</th>
+                <th>Flagged</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="v : ${varianceRows}">
+                <td th:text="${v.countNo}">SC-1</td>
+                <td th:text="${v.ingredientId}">1</td>
+                <td th:text="${v.expectedQty}">10</td>
+                <td th:text="${v.actualQty}">8</td>
+                <td th:text="${v.variancePercent}">-20</td>
+                <td th:text="${v.varianceValue}">-55.22</td>
+                <td th:text="${v.flagged}">true</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="status-block">
+        <h2>Current Inventory (Default Units)</h2>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Ingredient ID</th>
+                <th>On Hand</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="entry : ${stockByIngredient}">
+                <td th:text="${entry.key}">1</td>
+                <td th:text="${entry.value}">120.000</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+</body>
+</html>

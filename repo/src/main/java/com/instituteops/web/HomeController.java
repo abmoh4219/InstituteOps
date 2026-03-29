@@ -41,18 +41,8 @@ public class HomeController {
         return "role-page";
     }
 
-    @GetMapping("/inventory")
-    public String inventory() {
-        return "role-page";
-    }
-
     @GetMapping("/procurement")
     public String procurement() {
-        return "role-page";
-    }
-
-    @GetMapping("/store")
-    public String store() {
         return "role-page";
     }
 
