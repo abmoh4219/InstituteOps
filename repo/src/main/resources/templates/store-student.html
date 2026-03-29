@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Group Buy</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+</head>
+<body>
+<main class="shell wide-shell">
+    <div class="row between">
+        <h1>Student Group-Buy Store</h1>
+        <a th:href="@{/dashboard}">Back to dashboard</a>
+    </div>
+
+    <section class="status-block">
+        <h2>Active Campaigns</h2>
+        <div class="grid-2">
+            <article class="compact-form" th:each="c : ${vm.campaigns}">
+                <h3 th:text="${c.campaign.title}">Campaign</h3>
+                <p><strong th:text="${c.campaign.campaignCode}">CMP</strong> for <span th:text="${c.sku.skuCode}">SKU</span></p>
+                <p>Status: <span class="tag" th:text="${c.campaign.status}">ACTIVE</span></p>
+                <p>Tier sample (qty 1): <strong th:text="${c.sampleQuote.unitPrice + ' ' + c.sampleQuote.currency}">29.00 USD</strong></p>
+                <p>Per-student limit: <strong th:text="${c.sampleQuote.purchaseLimitPerStudent}">5</strong></p>
+                <p>Your committed qty: <strong th:text="${c.committedQty}">0</strong></p>
+                <p>Ends: <span th:text="${#temporals.format(c.campaign.endsAt, 'yyyy-MM-dd HH:mm')}">2026-01-01</span></p>
+                <p>Countdown: <span class="countdown" th:attr="data-seconds=${c.countdown.secondsToEnd}">--</span></p>
+                <p>Cutoff in: <span class="countdown" th:attr="data-seconds=${c.countdown.secondsToCutoff}">--</span></p>
+
+                <form method="post" th:action="@{/store/student/order}" class="grid-form">
+                    <input type="hidden" name="campaignId" th:value="${c.campaign.id}">
+                    <input name="groupCode" placeholder="Existing group code (optional)">
+                    <input type="number" name="quantity" min="1" value="1" required>
+                    <button type="submit">Join or Create Group Order</button>
+                </form>
+
+                <table class="table">
+                    <thead><tr><th>Group</th><th>Status</th><th>Members</th><th>Expires</th></tr></thead>
+                    <tbody>
+                    <tr th:each="g : ${c.groups}">
+                        <td th:text="${g.groupCode}">GRP</td>
+                        <td th:text="${g.status}">FORMING</td>
+                        <td th:text="${g.participantsCurrent + '/' + g.participantsTarget}">1/10</td>
+                        <td th:text="${#temporals.format(g.expiresAt, 'yyyy-MM-dd HH:mm')}">2026-01-01</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </article>
+        </div>
+    </section>
+
+    <section class="status-block">
+        <h2>My Orders</h2>
+        <table class="table">
+            <thead><tr><th>Order</th><th>Campaign</th><th>Group</th><th>Qty</th><th>Total</th><th>Status</th><th>Void Reason</th></tr></thead>
+            <tbody>
+            <tr th:each="o : ${vm.myOrders}">
+                <td th:text="${o.orderNo}">ORD</td>
+                <td th:text="${o.campaignId}">1</td>
+                <td th:text="${o.groupId}">1</td>
+                <td th:text="${o.quantity}">1</td>
+                <td th:text="${o.totalAmount}">29.00</td>
+                <td th:text="${o.orderStatus}">PENDING_GROUP</td>
+                <td th:text="${o.voidReason}">-</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+
+<script>
+    document.querySelectorAll('.countdown').forEach(function (el) {
+        var seconds = parseInt(el.dataset.seconds || '0', 10);
+        function render() {
+            if (seconds <= 0) {
+                el.textContent = '00:00:00';
+                return;
+            }
+            var h = Math.floor(seconds / 3600);
+            var m = Math.floor((seconds % 3600) / 60);
+            var s = seconds % 60;
+            el.textContent = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+            seconds -= 1;
+            setTimeout(render, 1000);
+        }
+        render();
+    });
+</script>
+</body>
+</html>

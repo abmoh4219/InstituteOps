@@ -23,6 +23,7 @@
         <a sec:authorize="hasAnyRole('SYSTEM_ADMIN','INVENTORY_MANAGER')" th:href="@{/inventory}">Inventory Manager</a>
         <a sec:authorize="hasAnyRole('SYSTEM_ADMIN','PROCUREMENT_APPROVER')" th:href="@{/procurement}">Procurement Approver</a>
         <a sec:authorize="hasAnyRole('SYSTEM_ADMIN','STORE_MANAGER')" th:href="@{/store}">Store Manager</a>
+        <a sec:authorize="hasAnyRole('SYSTEM_ADMIN','STUDENT','STORE_MANAGER')" th:href="@{/store/student}">Student Group-Buy</a>
         <a sec:authorize="hasAnyRole('SYSTEM_ADMIN','REGISTRAR_FINANCE_CLERK','INSTRUCTOR','STUDENT')" th:href="@{/student}">Student Area</a>
     </nav>
 

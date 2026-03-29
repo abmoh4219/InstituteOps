@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store Manager</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+</head>
+<body>
+<main class="shell wide-shell">
+    <div class="row between">
+        <h1>Store + Group-Buy Manager</h1>
+        <a th:href="@{/dashboard}">Back to dashboard</a>
+    </div>
+
+    <section class="status-block">
+        <div class="row between">
+            <h2>Catalog and Campaign Setup</h2>
+            <form method="post" th:action="@{/store/refresh}">
+                <button type="submit">Refresh Rules</button>
+            </form>
+        </div>
+        <div class="grid-2">
+            <form method="post" th:action="@{/store/spu}" class="grid-form compact-form">
+                <h3>Create SPU</h3>
+                <input name="spuCode" placeholder="SPU Code" required>
+                <input name="name" placeholder="SPU Name" required>
+                <input name="description" placeholder="Description">
+                <button type="submit">Create SPU</button>
+            </form>
+
+            <form method="post" th:action="@{/store/sku}" class="grid-form compact-form">
+                <h3>Create SKU</h3>
+                <input type="number" name="spuId" placeholder="SPU ID" required>
+                <input name="skuCode" placeholder="SKU Code" required>
+                <input name="name" placeholder="SKU Name" required>
+                <input name="specs" placeholder='Specs JSON {"bundle":"A"}'>
+                <input type="number" name="purchaseLimitPerStudent" value="5" required>
+                <button type="submit">Create SKU</button>
+            </form>
+
+            <form method="post" th:action="@{/store/tier}" class="grid-form compact-form">
+                <h3>Create Pricing Tier</h3>
+                <input type="number" name="skuId" placeholder="SKU ID" required>
+                <input type="number" name="minQty" placeholder="Min Qty" required>
+                <input type="number" step="0.01" name="unitPrice" placeholder="Unit Price" required>
+                <input name="currencyCode" value="USD" required>
+                <button type="submit">Create Tier</button>
+            </form>
+
+            <form method="post" th:action="@{/store/campaign}" class="grid-form compact-form">
+                <h3>Create Campaign</h3>
+                <input name="campaignCode" placeholder="CMP-2026-APR" required>
+                <input type="number" name="skuId" placeholder="SKU ID" required>
+                <input name="title" placeholder="Campaign title" required>
+                <label>Starts At <input type="datetime-local" name="startsAt" required></label>
+                <label>Ends At <input type="datetime-local" name="endsAt" required></label>
+                <label>Cutoff <input type="time" name="cutoffTime" value="21:00"></label>
+                <input type="number" name="requiredParticipants" value="10" min="2">
+                <input type="number" name="formationWindowHours" value="72" min="1">
+                <button type="submit">Create Campaign</button>
+            </form>
+        </div>
+    </section>
+
+    <section class="status-block">
+        <h2>Campaign Windows and Countdowns</h2>
+        <table class="table">
+            <thead><tr><th>Code</th><th>Title</th><th>Status</th><th>SKU</th><th>Ends</th><th>Countdown</th><th>Groups</th></tr></thead>
+            <tbody>
+            <tr th:each="c : ${vm.campaignCards}">
+                <td th:text="${c.campaign.campaignCode}">CMP</td>
+                <td th:text="${c.campaign.title}">Campaign</td>
+                <td th:text="${c.campaign.status}">ACTIVE</td>
+                <td th:text="${c.sku == null ? '-' : c.sku.skuCode}">SKU</td>
+                <td th:text="${#temporals.format(c.campaign.endsAt, 'yyyy-MM-dd HH:mm')}">2026-01-01</td>
+                <td class="countdown" th:attr="data-seconds=${c.countdown.secondsToEnd}">--</td>
+                <td th:text="${c.groupsCount}">0</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="status-block">
+        <h2>Groups and Order Locking</h2>
+        <table class="table">
+            <thead><tr><th>Group</th><th>Campaign</th><th>Status</th><th>Participants</th><th>Expires</th><th>Action</th></tr></thead>
+            <tbody>
+            <tr th:each="g : ${vm.groups}">
+                <td th:text="${g.groupCode}">GRP</td>
+                <td th:text="${g.campaignId}">1</td>
+                <td th:text="${g.status}">FORMING</td>
+                <td th:text="${g.participantsCurrent + '/' + g.participantsTarget}">1/10</td>
+                <td th:text="${#temporals.format(g.expiresAt, 'yyyy-MM-dd HH:mm')}">2026-01-01</td>
+                <td>
+                    <form method="post" th:if="${g.status == 'FORMED'}" th:action="@{/store/group/{id}/confirm(id=${g.id})}">
+                        <button type="submit">Confirm Orders</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <table class="table">
+            <thead><tr><th>Order</th><th>Group</th><th>Student</th><th>Qty</th><th>Total</th><th>Status</th><th>Void Reason</th></tr></thead>
+            <tbody>
+            <tr th:each="o : ${vm.orders}">
+                <td th:text="${o.orderNo}">ORD</td>
+                <td th:text="${o.groupId}">1</td>
+                <td th:text="${o.studentId}">1</td>
+                <td th:text="${o.quantity}">1</td>
+                <td th:text="${o.totalAmount}">0.00</td>
+                <td th:text="${o.orderStatus}">PENDING_GROUP</td>
+                <td th:text="${o.voidReason}">-</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="status-block">
+        <h2>Catalog Snapshot</h2>
+        <p th:text="${'SPUs: ' + #lists.size(vm.spus) + ', SKUs: ' + #lists.size(vm.skus) + ', Pricing tiers: ' + #lists.size(vm.tiers)}">Counts</p>
+        <p>Student experience lives at <a th:href="@{/store/student}">/store/student</a>.</p>
+    </section>
+</main>
+
+<script>
+    document.querySelectorAll('.countdown').forEach(function (el) {
+        var seconds = parseInt(el.dataset.seconds || '0', 10);
+        function render() {
+            if (seconds <= 0) {
+                el.textContent = 'Expired';
+                return;
+            }
+            var d = Math.floor(seconds / 86400);
+            var h = Math.floor((seconds % 86400) / 3600);
+            var m = Math.floor((seconds % 3600) / 60);
+            var s = seconds % 60;
+            el.textContent = d + 'd ' + h + 'h ' + m + 'm ' + s + 's';
+            seconds -= 1;
+            setTimeout(render, 1000);
+        }
+        render();
+    });
+</script>
+</body>
+</html>

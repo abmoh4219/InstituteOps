@@ -61,10 +61,19 @@ public class SecurityConfig {
                 .requestMatchers("/instructor/**").hasAnyRole(RoleCode.SYSTEM_ADMIN.name(), RoleCode.INSTRUCTOR.name())
                 .requestMatchers("/inventory/**").hasAnyRole(RoleCode.SYSTEM_ADMIN.name(), RoleCode.INVENTORY_MANAGER.name())
                 .requestMatchers("/procurement/**").hasAnyRole(RoleCode.SYSTEM_ADMIN.name(), RoleCode.PROCUREMENT_APPROVER.name())
+                .requestMatchers("/store/student/**", "/store/student").hasAnyRole(
+                    RoleCode.SYSTEM_ADMIN.name(),
+                    RoleCode.STORE_MANAGER.name(),
+                    RoleCode.STUDENT.name()
+                )
                 .requestMatchers("/store/**").hasAnyRole(RoleCode.SYSTEM_ADMIN.name(), RoleCode.STORE_MANAGER.name())
                 .requestMatchers("/api/inventory/**").hasAnyRole(RoleCode.SYSTEM_ADMIN.name(), RoleCode.INVENTORY_MANAGER.name())
                 .requestMatchers("/api/procurement/**").hasAnyRole(RoleCode.SYSTEM_ADMIN.name(), RoleCode.PROCUREMENT_APPROVER.name())
-                .requestMatchers("/api/store/**").hasAnyRole(RoleCode.SYSTEM_ADMIN.name(), RoleCode.STORE_MANAGER.name())
+                .requestMatchers("/api/store/**").hasAnyRole(
+                    RoleCode.SYSTEM_ADMIN.name(),
+                    RoleCode.STORE_MANAGER.name(),
+                    RoleCode.STUDENT.name()
+                )
                 .requestMatchers("/student/**", "/api/students/**", "/api/classes/**").hasAnyRole(
                     RoleCode.SYSTEM_ADMIN.name(),
                     RoleCode.REGISTRAR_FINANCE_CLERK.name(),
