@@ -74,6 +74,17 @@ public class SecurityConfig {
                     RoleCode.STORE_MANAGER.name(),
                     RoleCode.STUDENT.name()
                 )
+                .requestMatchers("/admin/recommender/**").hasRole(RoleCode.SYSTEM_ADMIN.name())
+                .requestMatchers("/api/recommender/train/**", "/api/recommender/incremental/**", "/api/recommender/rollback/**").hasRole(
+                    RoleCode.SYSTEM_ADMIN.name()
+                )
+                .requestMatchers("/api/recommender/**").hasAnyRole(
+                    RoleCode.SYSTEM_ADMIN.name(),
+                    RoleCode.STUDENT.name(),
+                    RoleCode.STORE_MANAGER.name(),
+                    RoleCode.INSTRUCTOR.name(),
+                    RoleCode.REGISTRAR_FINANCE_CLERK.name()
+                )
                 .requestMatchers("/student/**", "/api/students/**", "/api/classes/**").hasAnyRole(
                     RoleCode.SYSTEM_ADMIN.name(),
                     RoleCode.REGISTRAR_FINANCE_CLERK.name(),

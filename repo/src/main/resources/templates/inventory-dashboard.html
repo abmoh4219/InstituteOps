@@ -1,133 +1,103 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventory</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
-</head>
-<body>
-<main class="shell wide-shell">
-    <div class="row between">
-        <h1>Inventory Operations</h1>
-        <a th:href="@{/dashboard}">Back to dashboard</a>
-    </div>
+<head th:replace="~{fragments/app-shell :: head('Inventory Operations')}"></head>
+<body th:replace="~{fragments/app-shell :: shell('Inventory Operations', ~{::section})}">
+<section class="space-y-6">
+    <article class="card p-5">
+        <h3 class="mb-4 text-lg font-bold">Master Data</h3>
+        <div class="grid gap-4 xl:grid-cols-2">
+            <form method="post" th:action="@{/inventory/unit}" class="card p-4 space-y-2">
+                <h4 class="font-semibold">Unit</h4>
+                <input class="field-input" name="unitCode" placeholder="EA" required>
+                <input class="field-input" name="unitName" placeholder="Each" required>
+                <input class="field-input" name="unitType" placeholder="COUNT/WEIGHT/VOLUME/PACKAGE" required>
+                <label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" name="baseUnit"> Base unit</label>
+                <button class="btn-primary" type="submit">Create Unit</button>
+            </form>
 
-    <section class="status-block">
-        <h2>Master Data</h2>
-        <div class="grid-2">
-            <form method="post" th:action="@{/inventory/unit}" class="grid-form compact-form">
-                <h3>Unit</h3>
-                <input name="unitCode" placeholder="EA" required>
-                <input name="unitName" placeholder="Each" required>
-                <input name="unitType" placeholder="COUNT/WEIGHT/VOLUME/PACKAGE" required>
-                <label><input type="checkbox" name="baseUnit"> Base unit</label>
-                <button type="submit">Create Unit</button>
+            <form method="post" th:action="@{/inventory/conversion}" class="card p-4 space-y-2">
+                <h4 class="font-semibold">Multi-Unit Conversion</h4>
+                <input class="field-input" type="number" name="fromUnitId" placeholder="From Unit ID" required>
+                <input class="field-input" type="number" name="toUnitId" placeholder="To Unit ID" required>
+                <input class="field-input" type="number" step="0.000001" name="factor" placeholder="Factor" required>
+                <button class="btn-primary" type="submit">Create Conversion</button>
             </form>
-            <form method="post" th:action="@{/inventory/conversion}" class="grid-form compact-form">
-                <h3>Multi-Unit Conversion</h3>
-                <input type="number" name="fromUnitId" placeholder="From Unit ID" required>
-                <input type="number" name="toUnitId" placeholder="To Unit ID" required>
-                <input type="number" step="0.000001" name="factor" placeholder="Factor" required>
-                <button type="submit">Create Conversion</button>
+
+            <form method="post" th:action="@{/inventory/ingredient}" class="card p-4 space-y-2">
+                <h4 class="font-semibold">Ingredient</h4>
+                <input class="field-input" name="ingredientCode" placeholder="TOMATO" required>
+                <input class="field-input" name="ingredientName" placeholder="Tomato" required>
+                <input class="field-input" type="number" name="defaultUnitId" placeholder="Default Unit ID" required>
+                <button class="btn-primary" type="submit">Create Ingredient</button>
             </form>
-            <form method="post" th:action="@{/inventory/ingredient}" class="grid-form compact-form">
-                <h3>Ingredient</h3>
-                <input name="ingredientCode" placeholder="TOMATO" required>
-                <input name="ingredientName" placeholder="Tomato" required>
-                <input type="number" name="defaultUnitId" placeholder="Default Unit ID" required>
-                <button type="submit">Create Ingredient</button>
-            </form>
-            <form method="post" th:action="@{/inventory/batch}" class="grid-form compact-form">
-                <h3>Receive Batch + Shelf-life</h3>
-                <input type="number" name="ingredientId" placeholder="Ingredient ID" required>
-                <input name="batchNo" placeholder="Batch No" required>
-                <input type="number" step="0.001" name="quantity" placeholder="Quantity" required>
-                <input type="number" name="unitId" placeholder="Unit ID" required>
-                <input type="number" step="0.0001" name="unitCost" placeholder="Unit Cost" required>
-                <input type="date" name="expiresAt" required>
-                <button type="submit">Receive Batch</button>
+
+            <form method="post" th:action="@{/inventory/batch}" class="card p-4 space-y-2">
+                <h4 class="font-semibold">Receive Batch + Shelf-life</h4>
+                <input class="field-input" type="number" name="ingredientId" placeholder="Ingredient ID" required>
+                <input class="field-input" name="batchNo" placeholder="Batch No" required>
+                <input class="field-input" type="number" step="0.001" name="quantity" placeholder="Quantity" required>
+                <input class="field-input" type="number" name="unitId" placeholder="Unit ID" required>
+                <input class="field-input" type="number" step="0.0001" name="unitCost" placeholder="Unit Cost" required>
+                <input class="field-input" type="date" name="expiresAt" required>
+                <button class="btn-primary" type="submit">Receive Batch</button>
             </form>
         </div>
-    </section>
+    </article>
 
-    <section class="status-block">
-        <h2>FIFO Issue / Mandatory Loss Reason</h2>
-        <form method="post" th:action="@{/inventory/issue}" class="grid-form">
-            <div class="grid-2">
-                <input type="number" name="ingredientId" placeholder="Ingredient ID" required>
-                <select name="transactionType">
-                    <option>ISSUE</option>
-                    <option>LOSS</option>
-                    <option>ADJUSTMENT</option>
-                </select>
-                <input type="number" step="0.001" name="quantity" placeholder="Quantity" required>
-                <input type="number" name="unitId" placeholder="Unit ID" required>
-                <select name="lossReasonCode">
-                    <option value="">Loss reason (required only for LOSS)</option>
-                    <option>SPOILAGE</option>
-                    <option>DAMAGE</option>
-                    <option>THEFT</option>
-                    <option>PREP_WASTE</option>
-                </select>
-                <input name="note" placeholder="Note">
-            </div>
-            <button type="submit">Post FIFO Transaction</button>
+    <article class="card p-5">
+        <h3 class="mb-4 text-lg font-bold">FIFO Issue / Mandatory Loss Reason</h3>
+        <form method="post" th:action="@{/inventory/issue}" class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <input class="field-input" type="number" name="ingredientId" placeholder="Ingredient ID" required>
+            <select class="field-select" name="transactionType"><option>ISSUE</option><option>LOSS</option><option>ADJUSTMENT</option></select>
+            <input class="field-input" type="number" step="0.001" name="quantity" placeholder="Quantity" required>
+            <input class="field-input" type="number" name="unitId" placeholder="Unit ID" required>
+            <select class="field-select" name="lossReasonCode"><option value="">Loss reason (required only for LOSS)</option><option>SPOILAGE</option><option>DAMAGE</option><option>THEFT</option><option>PREP_WASTE</option></select>
+            <input class="field-input" name="note" placeholder="Note">
+            <div class="md:col-span-2 xl:col-span-3"><button class="btn-primary" type="submit">Post FIFO Transaction</button></div>
         </form>
-    </section>
+    </article>
 
-    <section class="status-block">
-        <h2>Stock Count + Variance Thresholds</h2>
-        <form method="post" th:action="@{/inventory/stock-count}" class="inline-form">
-            <input type="number" name="ingredientId" placeholder="Ingredient ID" required>
-            <input type="number" step="0.001" name="actualQty" placeholder="Actual Qty" required>
-            <input type="number" name="actualUnitId" placeholder="Actual Unit ID" required>
-            <button type="submit">Record Stock Count</button>
+    <article class="card p-5">
+        <h3 class="mb-4 text-lg font-bold">Stock Count + Variance Thresholds</h3>
+        <form method="post" th:action="@{/inventory/stock-count}" class="grid gap-3 md:grid-cols-4">
+            <input class="field-input" type="number" name="ingredientId" placeholder="Ingredient ID" required>
+            <input class="field-input" type="number" step="0.001" name="actualQty" placeholder="Actual Qty" required>
+            <input class="field-input" type="number" name="actualUnitId" placeholder="Actual Unit ID" required>
+            <button class="btn-primary" type="submit">Record Stock Count</button>
         </form>
-        <p>Variance flags trigger when over 2% or over $50.00.</p>
-        <table class="table">
-            <thead>
-            <tr>
-                <th>Count No</th>
-                <th>Ingredient</th>
-                <th>Expected</th>
-                <th>Actual</th>
-                <th>Variance %</th>
-                <th>Variance $</th>
-                <th>Flagged</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="v : ${varianceRows}">
-                <td th:text="${v.countNo}">SC-1</td>
-                <td th:text="${v.ingredientId}">1</td>
-                <td th:text="${v.expectedQty}">10</td>
-                <td th:text="${v.actualQty}">8</td>
-                <td th:text="${v.variancePercent}">-20</td>
-                <td th:text="${v.varianceValue}">-55.22</td>
-                <td th:text="${v.flagged}">true</td>
-            </tr>
-            </tbody>
-        </table>
-    </section>
+        <p class="mt-2 text-sm text-slate-500">Variance flags trigger when over 2% or over $50.00.</p>
+        <div class="mt-4 overflow-x-auto">
+            <table class="data-table">
+                <thead><tr><th>Count No</th><th>Ingredient</th><th>Expected</th><th>Actual</th><th>Variance %</th><th>Variance $</th><th>Flagged</th></tr></thead>
+                <tbody>
+                <tr th:each="v : ${varianceRows}">
+                    <td th:text="${v.countNo}">SC-1</td>
+                    <td th:text="${v.ingredientId}">1</td>
+                    <td th:text="${v.expectedQty}">10</td>
+                    <td th:text="${v.actualQty}">8</td>
+                    <td th:text="${v.variancePercent}">-20</td>
+                    <td th:text="${v.varianceValue}">-55.22</td>
+                    <td><span class="badge" th:classappend="${v.flagged} ? ' badge-danger' : ' badge-success'" th:text="${v.flagged}">true</span></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </article>
 
-    <section class="status-block">
-        <h2>Current Inventory (Default Units)</h2>
-        <table class="table">
-            <thead>
-            <tr>
-                <th>Ingredient ID</th>
-                <th>On Hand</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="entry : ${stockByIngredient}">
-                <td th:text="${entry.key}">1</td>
-                <td th:text="${entry.value}">120.000</td>
-            </tr>
-            </tbody>
-        </table>
-    </section>
-</main>
+    <article class="card p-5">
+        <h3 class="mb-4 text-lg font-bold">Current Inventory (Default Units)</h3>
+        <div class="overflow-x-auto">
+            <table class="data-table">
+                <thead><tr><th>Ingredient ID</th><th>On Hand</th></tr></thead>
+                <tbody>
+                <tr th:each="entry : ${stockByIngredient}">
+                    <td th:text="${entry.key}">1</td>
+                    <td th:text="${entry.value}">120.000</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </article>
+</section>
 </body>
 </html>

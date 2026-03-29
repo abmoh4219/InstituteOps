@@ -1,5 +1,6 @@
 package com.instituteops.web;
 
+import com.instituteops.recommender.domain.RecommenderService;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -9,6 +10,12 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
 public class HomeController {
+
+    private final RecommenderService recommenderService;
+
+    public HomeController(RecommenderService recommenderService) {
+        this.recommenderService = recommenderService;
+    }
 
     @GetMapping("/")
     public String index() {
@@ -23,6 +30,7 @@ public class HomeController {
     @GetMapping("/dashboard")
     public String dashboard(Authentication authentication, Model model) {
         model.addAttribute("username", authentication.getName());
+        model.addAttribute("recommendations", recommenderService.recommendationsForCurrentUser(5));
         return "dashboard";
     }
 

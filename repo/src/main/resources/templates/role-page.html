@@ -1,20 +1,16 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Role Area</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
-</head>
-<body>
-<main class="shell">
-    <h1>Role Protected Area</h1>
-    <p>Access granted based on least-privilege RBAC policy.</p>
-    <p>Active authorities:</p>
-    <ul>
-        <li sec:authentication="authorities">[ROLE]</li>
-    </ul>
-    <a th:href="@{/dashboard}">Back to dashboard</a>
-</main>
+<head th:replace="~{fragments/app-shell :: head('Role Workspace')}"></head>
+<body th:replace="~{fragments/app-shell :: shell('Role Workspace', ~{::section})}">
+<section class="space-y-6">
+    <article class="card p-6">
+        <h2 class="text-2xl font-extrabold tracking-tight">Role Protected Area</h2>
+        <p class="mt-2 text-sm text-slate-600">Access is enforced by least-privilege RBAC. This workspace is visible only to permitted roles.</p>
+        <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Current Authorities</p>
+            <p class="mt-2 text-sm font-semibold text-brand-700" sec:authentication="authorities">[ROLE]</p>
+        </div>
+    </article>
+</section>
 </body>
 </html>

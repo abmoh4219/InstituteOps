@@ -1,5 +1,6 @@
 package com.instituteops.store.domain;
 
+import com.instituteops.recommender.domain.RecommenderService;
 import com.instituteops.security.UserIdentityService;
 import com.instituteops.security.repo.UserRepository;
 import jakarta.transaction.Transactional;
@@ -35,6 +36,7 @@ public class CatalogService {
     private final UserIdentityService userIdentityService;
     private final UserRepository userRepository;
     private final JdbcTemplate jdbcTemplate;
+    private final RecommenderService recommenderService;
 
     public CatalogService(
         SpuCatalogRepository spuCatalogRepository,
@@ -47,7 +49,8 @@ public class CatalogService {
         InventoryLockRepository inventoryLockRepository,
         UserIdentityService userIdentityService,
         UserRepository userRepository,
-        JdbcTemplate jdbcTemplate
+        JdbcTemplate jdbcTemplate,
+        RecommenderService recommenderService
     ) {
         this.spuCatalogRepository = spuCatalogRepository;
         this.skuCatalogRepository = skuCatalogRepository;
@@ -60,6 +63,7 @@ public class CatalogService {
         this.userIdentityService = userIdentityService;
         this.userRepository = userRepository;
         this.jdbcTemplate = jdbcTemplate;
+        this.recommenderService = recommenderService;
     }
 
     @Transactional
@@ -233,6 +237,16 @@ public class CatalogService {
         order.setPaymentCaptured(false);
         order.setPlacedAt(LocalDateTime.now());
         GroupBuyOrderEntity saved = groupBuyOrderRepository.save(order);
+
+        recommenderService.recordEvent(new RecommenderService.RecordEventRequest(
+            "ORDER",
+            currentStudentId(),
+            "SKU",
+            campaign.getSkuId(),
+            BigDecimal.valueOf(qty),
+            LocalDateTime.now(),
+            "STORE_ORDER"
+        ));
 
         updateGroupProgress(group.getId());
         refreshCampaignStates();

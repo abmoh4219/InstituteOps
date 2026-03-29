@@ -1,36 +1,55 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InstituteOps Dashboard</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
-</head>
-<body>
-<main class="shell">
-    <div class="row between">
-        <h1>InstituteOps</h1>
-        <form method="post" th:action="@{/logout}">
-            <button type="submit">Logout</button>
-        </form>
+<head th:replace="~{fragments/app-shell :: head('InstituteOps Dashboard')}"></head>
+<body th:replace="~{fragments/app-shell :: shell('Dashboard', ~{::section})}">
+<section class="space-y-6">
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <article class="card p-5">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Active Students</p>
+            <p class="mt-2 text-3xl font-extrabold">128</p>
+            <p class="mt-1 text-sm text-emerald-600">+4.1% this week</p>
+        </article>
+        <article class="card p-5">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Pending Group-Buy Orders</p>
+            <p class="mt-2 text-3xl font-extrabold">19</p>
+            <p class="mt-1 text-sm text-amber-600">5 awaiting lock confirmation</p>
+        </article>
+        <article class="card p-5">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Low Stock Alerts</p>
+            <p class="mt-2 text-3xl font-extrabold">7</p>
+            <p class="mt-1 text-sm text-rose-600">2 critical ingredients</p>
+        </article>
+        <article class="card p-5">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Today's Revenue</p>
+            <p class="mt-2 text-3xl font-extrabold">$2,940</p>
+            <p class="mt-1 text-sm text-emerald-600">Offline payments synced</p>
+        </article>
     </div>
-    <p>Signed in as <strong th:text="${username}">user</strong></p>
 
-    <nav class="grid-links">
-        <a sec:authorize="hasRole('SYSTEM_ADMIN')" th:href="@{/admin}">System Administrator</a>
-        <a sec:authorize="hasAnyRole('SYSTEM_ADMIN','REGISTRAR_FINANCE_CLERK')" th:href="@{/registrar}">Registrar / Finance</a>
-        <a sec:authorize="hasAnyRole('SYSTEM_ADMIN','INSTRUCTOR')" th:href="@{/instructor/grades}">Instructor Grades</a>
-        <a sec:authorize="hasAnyRole('SYSTEM_ADMIN','INVENTORY_MANAGER')" th:href="@{/inventory}">Inventory Manager</a>
-        <a sec:authorize="hasAnyRole('SYSTEM_ADMIN','PROCUREMENT_APPROVER')" th:href="@{/procurement}">Procurement Approver</a>
-        <a sec:authorize="hasAnyRole('SYSTEM_ADMIN','STORE_MANAGER')" th:href="@{/store}">Store Manager</a>
-        <a sec:authorize="hasAnyRole('SYSTEM_ADMIN','STUDENT','STORE_MANAGER')" th:href="@{/store/student}">Student Group-Buy</a>
-        <a sec:authorize="hasAnyRole('SYSTEM_ADMIN','REGISTRAR_FINANCE_CLERK','INSTRUCTOR','STUDENT')" th:href="@{/student}">Student Area</a>
-    </nav>
+    <article class="card p-5">
+        <div class="mb-4 flex items-center justify-between">
+            <h3 class="text-lg font-bold">Personalized Recommendations</h3>
+            <span class="text-xs text-slate-500">Live model output</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="data-table">
+                <thead><tr><th>Rank</th><th>Item</th><th>Type</th><th>Score</th></tr></thead>
+                <tbody>
+                <tr th:each="r : ${recommendations}">
+                    <td th:text="${r.rank}">1</td>
+                    <td th:text="${r.itemLabel}">MAT-KIT-001-A</td>
+                    <td th:text="${r.itemType}">SKU</td>
+                    <td class="font-semibold text-brand-700" th:text="${r.score}">0.0000</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </article>
 
-    <section class="status-block">
-        <h2>Internal API test</h2>
-        <p>Token/key-based internal route: <code>/api/internal/ping</code> (requires <code>X-API-KEY</code> and <code>X-API-SECRET</code>).</p>
-    </section>
-</main>
+    <article class="card p-5">
+        <h3 class="text-lg font-bold">Internal API Access</h3>
+        <p class="mt-2 text-sm text-slate-600">Token/key internal route <code class="rounded bg-slate-100 px-1.5 py-0.5">/api/internal/ping</code> with <code class="rounded bg-slate-100 px-1.5 py-0.5">X-API-KEY</code> and <code class="rounded bg-slate-100 px-1.5 py-0.5">X-API-SECRET</code>.</p>
+    </article>
+</section>
 </body>
 </html>

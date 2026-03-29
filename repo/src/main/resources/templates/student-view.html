@@ -1,168 +1,137 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Record</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
-</head>
-<body>
-<main class="shell wide-shell">
-    <div class="row between">
-        <h1 th:text="${timeline.student.firstName + ' ' + timeline.student.lastName}">Student Name</h1>
-        <a th:href="@{/student}">Back to list</a>
-    </div>
-    <p>
-        Student No <strong th:text="${timeline.student.studentNo}">S-1001</strong>
-        <span class="tag" th:text="${timeline.student.status}">ACTIVE</span>
-    </p>
+<head th:replace="~{fragments/app-shell :: head('Student Record')}"></head>
+<body th:replace="~{fragments/app-shell :: shell('Student Record', ~{::section})}">
+<section class="space-y-6">
+    <article class="card p-5">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+                <h2 class="text-2xl font-extrabold" th:text="${timeline.student.firstName + ' ' + timeline.student.lastName}">Student Name</h2>
+                <p class="mt-1 text-sm text-slate-600">Student No <strong th:text="${timeline.student.studentNo}">S-1001</strong></p>
+            </div>
+            <span class="badge badge-success" th:text="${timeline.student.status}">ACTIVE</span>
+        </div>
+    </article>
 
-    <section class="status-block">
-        <h2>Contact (Masked by default)</h2>
-        <p>Email: <strong th:text="${timeline.contact.email}">ma***@mail.com</strong></p>
-        <p>Phone: <strong th:text="${timeline.contact.phone}">***-***-1111</strong></p>
-        <p>Address: <strong th:text="${timeline.contact.address}">Address masked</strong></p>
-        <p>Emergency: <strong th:text="${timeline.contact.emergencyContact}">Emergency contact masked</strong></p>
-        <p><a th:href="@{/student/{id}(id=${timeline.student.id},unmask=true)}">Request unmasked view</a></p>
-        <p th:if="${allowUnmask}">Unmasked details are currently visible by role permission.</p>
-    </section>
+    <article class="card p-5">
+        <h3 class="text-lg font-bold">Contact (Masked by default)</h3>
+        <div class="mt-3 grid gap-2 md:grid-cols-2 text-sm">
+            <p>Email: <strong th:text="${timeline.contact.email}">ma***@mail.com</strong></p>
+            <p>Phone: <strong th:text="${timeline.contact.phone}">***-***-1111</strong></p>
+            <p>Address: <strong th:text="${timeline.contact.address}">Address masked</strong></p>
+            <p>Emergency: <strong th:text="${timeline.contact.emergencyContact}">Emergency contact masked</strong></p>
+        </div>
+        <div class="mt-3 flex flex-wrap items-center gap-3">
+            <a class="btn-soft" th:href="@{/student/{id}(id=${timeline.student.id},unmask=true)}">Request Unmasked View</a>
+            <p class="text-xs text-brand-700" th:if="${allowUnmask}">Unmasked details are visible by role permission.</p>
+        </div>
+    </article>
 
-    <section class="status-block">
-        <h2>Lifecycle Actions</h2>
-        <div class="grid-2">
-            <form method="post" th:action="@{/student/{id}/status(id=${timeline.student.id})}" class="inline-form">
-                <select name="status">
-                    <option>ACTIVE</option>
-                    <option>INACTIVE</option>
-                    <option>GRADUATED</option>
-                    <option>SUSPENDED</option>
-                    <option>WITHDRAWN</option>
+    <article class="card p-5">
+        <h3 class="mb-4 text-lg font-bold">Lifecycle Actions</h3>
+        <div class="grid gap-4 lg:grid-cols-2">
+            <form method="post" th:action="@{/student/{id}/status(id=${timeline.student.id})}" class="flex gap-2">
+                <select class="field-select" name="status">
+                    <option>ACTIVE</option><option>INACTIVE</option><option>GRADUATED</option><option>SUSPENDED</option><option>WITHDRAWN</option>
                 </select>
-                <button type="submit">Update Status</button>
+                <button class="btn-primary" type="submit">Update Status</button>
             </form>
-            <div class="row">
-                <form method="post" th:action="@{/student/{id}/delete(id=${timeline.student.id})}">
-                    <button type="submit">Soft Delete</button>
-                </form>
-                <form method="post" th:action="@{/student/{id}/restore(id=${timeline.student.id})}">
-                    <button type="submit">Restore</button>
-                </form>
+            <div class="flex gap-2">
+                <form method="post" th:action="@{/student/{id}/delete(id=${timeline.student.id})}"><button class="btn-soft" type="submit">Soft Delete</button></form>
+                <form method="post" th:action="@{/student/{id}/restore(id=${timeline.student.id})}"><button class="btn-primary" type="submit">Restore</button></form>
             </div>
         </div>
-    </section>
+    </article>
 
-    <section class="status-block">
-        <h2>Enrollment / Payments / Attendance / Comments / Homework</h2>
-        <div class="grid-2">
-            <form method="post" th:action="@{/student/{id}/enroll(id=${timeline.student.id})}" class="grid-form compact-form">
-                <h3>Enrollment</h3>
-                <select name="classId" required>
+    <article class="card p-5">
+        <h3 class="mb-4 text-lg font-bold">Enrollment, Payments, Attendance, Comments, Homework</h3>
+        <div class="grid gap-4 xl:grid-cols-2">
+            <form method="post" th:action="@{/student/{id}/enroll(id=${timeline.student.id})}" class="card p-4 space-y-2">
+                <h4 class="font-semibold">Enrollment</h4>
+                <select class="field-select" name="classId" required>
                     <option th:each="cls : ${classes}" th:value="${cls.id}" th:text="${cls.classCode + ' - ' + cls.className}">Class</option>
                 </select>
-                <select name="enrollmentStatus" required>
-                    <option>ENROLLED</option>
-                    <option>WAITLISTED</option>
-                    <option>WITHDRAWN</option>
-                    <option>COMPLETED</option>
-                    <option>FAILED</option>
+                <select class="field-select" name="enrollmentStatus" required>
+                    <option>ENROLLED</option><option>WAITLISTED</option><option>WITHDRAWN</option><option>COMPLETED</option><option>FAILED</option>
                 </select>
-                <input type="date" name="completionDate">
-                <button type="submit">Add Enrollment</button>
+                <input class="field-input" type="date" name="completionDate">
+                <button class="btn-primary" type="submit">Add Enrollment</button>
             </form>
 
-            <form method="post" th:action="@{/student/{id}/payments(id=${timeline.student.id})}" class="grid-form compact-form">
-                <h3>Offline Payment</h3>
-                <input type="number" name="enrollmentId" placeholder="Enrollment ID">
-                <select name="paymentMethod" required>
-                    <option>CASH</option>
-                    <option>CHECK</option>
-                    <option>OTHER_OFFLINE</option>
-                </select>
-                <input type="number" step="0.01" name="amount" placeholder="Amount" required>
-                <input type="text" name="currencyCode" value="USD">
-                <input type="text" name="paymentReference" placeholder="Reference">
-                <input type="text" name="note" placeholder="Note">
-                <button type="submit">Record Payment</button>
+            <form method="post" th:action="@{/student/{id}/payments(id=${timeline.student.id})}" class="card p-4 space-y-2">
+                <h4 class="font-semibold">Offline Payment</h4>
+                <input class="field-input" type="number" name="enrollmentId" placeholder="Enrollment ID">
+                <select class="field-select" name="paymentMethod" required><option>CASH</option><option>CHECK</option><option>OTHER_OFFLINE</option></select>
+                <input class="field-input" type="number" step="0.01" name="amount" placeholder="Amount" required>
+                <input class="field-input" type="text" name="currencyCode" value="USD">
+                <input class="field-input" type="text" name="paymentReference" placeholder="Reference">
+                <input class="field-input" type="text" name="note" placeholder="Note">
+                <button class="btn-primary" type="submit">Record Payment</button>
             </form>
 
-            <form method="post" th:action="@{/student/{id}/attendance(id=${timeline.student.id})}" class="grid-form compact-form">
-                <h3>Attendance</h3>
-                <input type="number" name="enrollmentId" placeholder="Enrollment ID" required>
-                <input type="number" name="classSessionId" placeholder="Class Session ID" required>
-                <select name="attendanceStatus" required>
-                    <option>PRESENT</option>
-                    <option>ABSENT</option>
-                    <option>LATE</option>
-                    <option>EXCUSED</option>
-                </select>
-                <input type="text" name="note" placeholder="Note">
-                <button type="submit">Record Attendance</button>
+            <form method="post" th:action="@{/student/{id}/attendance(id=${timeline.student.id})}" class="card p-4 space-y-2">
+                <h4 class="font-semibold">Attendance</h4>
+                <input class="field-input" type="number" name="enrollmentId" placeholder="Enrollment ID" required>
+                <input class="field-input" type="number" name="classSessionId" placeholder="Class Session ID" required>
+                <select class="field-select" name="attendanceStatus" required><option>PRESENT</option><option>ABSENT</option><option>LATE</option><option>EXCUSED</option></select>
+                <input class="field-input" type="text" name="note" placeholder="Note">
+                <button class="btn-primary" type="submit">Record Attendance</button>
             </form>
 
-            <form method="post" th:action="@{/student/{id}/comments(id=${timeline.student.id})}" class="grid-form compact-form">
-                <h3>Instructor Comment</h3>
-                <input type="number" name="classId" placeholder="Class ID">
-                <input type="number" name="classSessionId" placeholder="Session ID">
-                <input type="text" name="commentText" placeholder="Comment" required>
-                <select name="visibility">
-                    <option>INTERNAL</option>
-                    <option>STUDENT_VISIBLE</option>
-                </select>
-                <button type="submit">Add Comment</button>
+            <form method="post" th:action="@{/student/{id}/comments(id=${timeline.student.id})}" class="card p-4 space-y-2">
+                <h4 class="font-semibold">Instructor Comment</h4>
+                <input class="field-input" type="number" name="classId" placeholder="Class ID">
+                <input class="field-input" type="number" name="classSessionId" placeholder="Session ID">
+                <input class="field-input" type="text" name="commentText" placeholder="Comment" required>
+                <select class="field-select" name="visibility"><option>INTERNAL</option><option>STUDENT_VISIBLE</option></select>
+                <button class="btn-primary" type="submit">Add Comment</button>
             </form>
 
-            <form method="post" enctype="multipart/form-data" th:action="@{/student/{id}/homework(id=${timeline.student.id})}" class="grid-form compact-form">
-                <h3>Homework Attachment</h3>
-                <input type="number" name="classId" placeholder="Class ID">
-                <input type="number" name="classSessionId" placeholder="Session ID">
-                <input type="text" name="expectedChecksum" placeholder="Expected SHA-256 (optional)">
-                <input type="file" name="file" accept="application/pdf,image/jpeg" required>
-                <button type="submit">Upload (PDF/JPG up to 10MB)</button>
+            <form method="post" enctype="multipart/form-data" th:action="@{/student/{id}/homework(id=${timeline.student.id})}" class="card p-4 space-y-2 xl:col-span-2">
+                <h4 class="font-semibold">Homework Attachment</h4>
+                <div class="grid gap-2 md:grid-cols-3">
+                    <input class="field-input" type="number" name="classId" placeholder="Class ID">
+                    <input class="field-input" type="number" name="classSessionId" placeholder="Session ID">
+                    <input class="field-input" type="text" name="expectedChecksum" placeholder="Expected SHA-256 (optional)">
+                </div>
+                <input class="field-input" type="file" name="file" accept="application/pdf,image/jpeg" required>
+                <button class="btn-primary" type="submit">Upload (PDF/JPG up to 10MB)</button>
             </form>
         </div>
-    </section>
+    </article>
 
-    <section class="status-block">
-        <h2>Timeline Dashboard</h2>
-        <table class="table">
-            <thead>
-            <tr>
-                <th>When</th>
-                <th>Type</th>
-                <th>Details</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="item : ${timeline.timeline}">
-                <td th:text="${#temporals.format(item.occurredAt, 'yyyy-MM-dd HH:mm')}">2026-01-01 12:00</td>
-                <td th:text="${item.type}">PAYMENT</td>
-                <td th:text="${item.details}">Details</td>
-            </tr>
-            </tbody>
-        </table>
-    </section>
+    <article class="card p-5">
+        <h3 class="mb-4 text-lg font-bold">Timeline Dashboard</h3>
+        <div class="overflow-x-auto">
+            <table class="data-table">
+                <thead><tr><th>When</th><th>Type</th><th>Details</th></tr></thead>
+                <tbody>
+                <tr th:each="item : ${timeline.timeline}">
+                    <td th:text="${#temporals.format(item.occurredAt, 'yyyy-MM-dd HH:mm')}">2026-01-01 12:00</td>
+                    <td th:text="${item.type}">PAYMENT</td>
+                    <td th:text="${item.details}">Details</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </article>
 
-    <section class="status-block">
-        <h2>Homework Attachments</h2>
-        <table class="table">
-            <thead>
-            <tr>
-                <th>Uploaded</th>
-                <th>File</th>
-                <th>Type</th>
-                <th>Checksum (SHA-256)</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="a : ${timeline.attachments}">
-                <td th:text="${#temporals.format(a.uploadedAt, 'yyyy-MM-dd HH:mm')}">2026-01-01 12:00</td>
-                <td th:text="${a.originalFileName}">assignment.pdf</td>
-                <td th:text="${a.mimeType}">application/pdf</td>
-                <td><code th:text="${a.sha256Checksum}">checksum</code></td>
-            </tr>
-            </tbody>
-        </table>
-    </section>
-</main>
+    <article class="card p-5">
+        <h3 class="mb-4 text-lg font-bold">Homework Attachments</h3>
+        <div class="overflow-x-auto">
+            <table class="data-table">
+                <thead><tr><th>Uploaded</th><th>File</th><th>Type</th><th>Checksum (SHA-256)</th></tr></thead>
+                <tbody>
+                <tr th:each="a : ${timeline.attachments}">
+                    <td th:text="${#temporals.format(a.uploadedAt, 'yyyy-MM-dd HH:mm')}">2026-01-01 12:00</td>
+                    <td th:text="${a.originalFileName}">assignment.pdf</td>
+                    <td th:text="${a.mimeType}">application/pdf</td>
+                    <td><code class="rounded bg-slate-100 px-1.5 py-0.5" th:text="${a.sha256Checksum}">checksum</code></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </article>
+</section>
 </body>
 </html>

@@ -1,62 +1,53 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Students</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
-</head>
-<body>
-<main class="shell wide-shell">
-    <div class="row between">
-        <h1>Student Lifecycle</h1>
-        <a th:href="@{/dashboard}">Back to dashboard</a>
-    </div>
-
-    <form method="get" th:action="@{/student}" class="inline-form">
-        <input type="text" name="q" placeholder="Search first/last name" th:value="${query}">
-        <button type="submit">Search</button>
-    </form>
-
-    <section class="status-block">
-        <h2>Create Student</h2>
-        <form method="post" th:action="@{/student}" class="grid-form">
-            <input type="text" name="studentNo" placeholder="Student No" required>
-            <input type="text" name="firstName" placeholder="First Name" required>
-            <input type="text" name="lastName" placeholder="Last Name" required>
-            <input type="text" name="preferredName" placeholder="Preferred Name">
-            <input type="date" name="dateOfBirth" required>
-            <input type="email" name="contactEmail" placeholder="Contact Email">
-            <input type="text" name="contactPhone" placeholder="Contact Phone">
-            <input type="text" name="contactAddress" placeholder="Contact Address">
-            <input type="text" name="emergencyContact" placeholder="Emergency Contact">
-            <button type="submit">Create Student</button>
+<head th:replace="~{fragments/app-shell :: head('Student Lifecycle')}"></head>
+<body th:replace="~{fragments/app-shell :: shell('Student Lifecycle', ~{::section})}">
+<section class="space-y-6">
+    <article class="card p-5">
+        <form method="get" th:action="@{/student}" class="grid gap-3 md:grid-cols-[1fr_auto]">
+            <div>
+                <label class="field-label" for="q">Search Students</label>
+                <input id="q" class="field-input" type="text" name="q" placeholder="Search by first or last name" th:value="${query}">
+            </div>
+            <button class="btn-primary self-end" type="submit">Search</button>
         </form>
-    </section>
+    </article>
 
-    <section class="status-block">
-        <h2>Students</h2>
-        <table class="table">
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>Student No</th>
-                <th>Name</th>
-                <th>Status</th>
-                <th>Action</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="student : ${students}">
-                <td th:text="${student.id}">1</td>
-                <td th:text="${student.studentNo}">S-0001</td>
-                <td th:text="${student.firstName + ' ' + student.lastName}">Jane Doe</td>
-                <td th:text="${student.status}">ACTIVE</td>
-                <td><a th:href="@{/student/{id}(id=${student.id})}">Open</a></td>
-            </tr>
-            </tbody>
-        </table>
-    </section>
-</main>
+    <article class="card p-5">
+        <h3 class="mb-4 text-lg font-bold">Create Student Profile</h3>
+        <form method="post" th:action="@{/student}" class="grid gap-4 md:grid-cols-2">
+            <label><span class="field-label">Student No</span><input class="field-input" type="text" name="studentNo" required></label>
+            <label><span class="field-label">First Name</span><input class="field-input" type="text" name="firstName" required></label>
+            <label><span class="field-label">Last Name</span><input class="field-input" type="text" name="lastName" required></label>
+            <label><span class="field-label">Preferred Name</span><input class="field-input" type="text" name="preferredName"></label>
+            <label><span class="field-label">Date of Birth</span><input class="field-input" type="date" name="dateOfBirth" required></label>
+            <label><span class="field-label">Contact Email</span><input class="field-input" type="email" name="contactEmail"></label>
+            <label><span class="field-label">Contact Phone</span><input class="field-input" type="text" name="contactPhone"></label>
+            <label><span class="field-label">Contact Address</span><input class="field-input" type="text" name="contactAddress"></label>
+            <label class="md:col-span-2"><span class="field-label">Emergency Contact</span><input class="field-input" type="text" name="emergencyContact"></label>
+            <div class="md:col-span-2">
+                <button class="btn-primary" type="submit">Create Student</button>
+            </div>
+        </form>
+    </article>
+
+    <article class="card p-5">
+        <h3 class="mb-4 text-lg font-bold">Student Directory</h3>
+        <div class="overflow-x-auto">
+            <table class="data-table">
+                <thead><tr><th>ID</th><th>Student No</th><th>Name</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody>
+                <tr th:each="student : ${students}">
+                    <td th:text="${student.id}">1</td>
+                    <td th:text="${student.studentNo}">S-0001</td>
+                    <td th:text="${student.firstName + ' ' + student.lastName}">Jane Doe</td>
+                    <td><span class="badge badge-success" th:text="${student.status}">ACTIVE</span></td>
+                    <td><a class="btn-soft" th:href="@{/student/{id}(id=${student.id})}">Open</a></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </article>
+</section>
 </body>
 </html>

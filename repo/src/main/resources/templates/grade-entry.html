@@ -1,82 +1,56 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grade Ledger</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
-</head>
-<body>
-<main class="shell wide-shell">
-    <div class="row between">
-        <h1>Grade Entry Ledger</h1>
-        <a th:href="@{/dashboard}">Back to dashboard</a>
-    </div>
-
-    <section class="status-block">
-        <h2>Enter Grade (Append-Only)</h2>
-        <form method="post" th:action="@{/instructor/grades}" class="grid-form">
-            <div class="grid-2">
-                <input type="number" name="studentId" placeholder="Student ID" required>
-                <input type="number" name="classId" placeholder="Class ID" required>
-                <input type="number" name="classSessionId" placeholder="Class Session ID">
-                <input type="number" name="enrollmentId" placeholder="Enrollment ID">
-                <input type="text" name="assessmentKey" placeholder="Assessment Key" required>
-                <input type="number" step="0.001" name="rawScore" placeholder="Raw Score" required>
-                <input type="number" step="0.001" name="maxScore" placeholder="Max Score" required>
-                <select name="operationType">
-                    <option>ENTRY</option>
-                    <option>EDIT</option>
-                    <option>RECALCULATION</option>
-                    <option>MANUAL_OVERRIDE</option>
-                </select>
-                <input type="text" name="reasonCode" placeholder="Reason Code (manual override required)">
-                <input type="number" name="previousEntryId" placeholder="Previous Entry ID (for edit/override)">
-            </div>
-            <div class="row">
-                <button type="button" id="previewImpact">Preview Impact</button>
-                <button type="submit">Append Ledger Entry</button>
+<head th:replace="~{fragments/app-shell :: head('Grade Ledger')}"></head>
+<body th:replace="~{fragments/app-shell :: shell('Grade Entry Ledger', ~{::section})}">
+<section class="space-y-6">
+    <article class="card p-5">
+        <div class="mb-4 flex items-center justify-between">
+            <h3 class="text-lg font-bold">Append-Only Grade Entry</h3>
+            <span class="badge badge-warning">Immediate GPA Impact</span>
+        </div>
+        <form method="post" th:action="@{/instructor/grades}" class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <label><span class="field-label">Student ID</span><input class="field-input" type="number" name="studentId" required></label>
+            <label><span class="field-label">Class ID</span><input class="field-input" type="number" name="classId" required></label>
+            <label><span class="field-label">Class Session ID</span><input class="field-input" type="number" name="classSessionId"></label>
+            <label><span class="field-label">Enrollment ID</span><input class="field-input" type="number" name="enrollmentId"></label>
+            <label><span class="field-label">Assessment Key</span><input class="field-input" type="text" name="assessmentKey" required></label>
+            <label><span class="field-label">Raw Score</span><input class="field-input" type="number" step="0.001" name="rawScore" required></label>
+            <label><span class="field-label">Max Score</span><input class="field-input" type="number" step="0.001" name="maxScore" required></label>
+            <label><span class="field-label">Operation Type</span><select class="field-select" name="operationType"><option>ENTRY</option><option>EDIT</option><option>RECALCULATION</option><option>MANUAL_OVERRIDE</option></select></label>
+            <label><span class="field-label">Reason Code</span><input class="field-input" type="text" name="reasonCode" placeholder="Required for manual override"></label>
+            <label><span class="field-label">Previous Entry ID</span><input class="field-input" type="number" name="previousEntryId"></label>
+            <div class="md:col-span-2 xl:col-span-3 flex flex-wrap gap-2">
+                <button type="button" id="previewImpact" class="btn-soft">Preview Impact</button>
+                <button class="btn-primary" type="submit">Append Ledger Entry</button>
             </div>
         </form>
-        <div id="impactPanel" class="impact-panel"></div>
-    </section>
+        <div id="impactPanel" class="mt-4 rounded-xl border border-brand-100 bg-brand-50 p-4 text-sm text-slate-700">Preview impact before submitting.</div>
+    </article>
 
-    <section class="status-block">
-        <h2>Recent Ledger Entries</h2>
-        <table class="table">
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>When</th>
-                <th>Student</th>
-                <th>Class</th>
-                <th>Assessment</th>
-                <th>Score</th>
-                <th>Grade</th>
-                <th>Credits</th>
-                <th>GPA Impact</th>
-                <th>Delta</th>
-                <th>Op</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="e : ${entries}">
-                <td th:text="${e.id}">1</td>
-                <td th:text="${#temporals.format(e.enteredAt, 'yyyy-MM-dd HH:mm:ss')}">2026-01-01 12:00:00</td>
-                <td th:text="${e.studentId}">1</td>
-                <td th:text="${e.classId}">1</td>
-                <td th:text="${e.assessmentKey}">MIDTERM</td>
-                <td th:text="${e.rawScore + ' / ' + e.maxScore}">87/100</td>
-                <td th:text="${e.gradeLetter}">B+</td>
-                <td th:text="${e.creditsEarned}">3.000</td>
-                <td th:text="${e.gpaPoints}">9.900</td>
-                <td th:text="${e.deltaScore + ' / ' + e.deltaCredits + ' / ' + e.deltaGpaPoints}">-</td>
-                <td th:text="${e.operationType}">ENTRY</td>
-            </tr>
-            </tbody>
-        </table>
-    </section>
-</main>
+    <article class="card p-5">
+        <h3 class="mb-4 text-lg font-bold">Recent Ledger Entries</h3>
+        <div class="overflow-x-auto">
+            <table class="data-table">
+                <thead><tr><th>ID</th><th>When</th><th>Student</th><th>Class</th><th>Assessment</th><th>Score</th><th>Grade</th><th>Credits</th><th>GPA Impact</th><th>Delta</th><th>Op</th></tr></thead>
+                <tbody>
+                <tr th:each="e : ${entries}">
+                    <td th:text="${e.id}">1</td>
+                    <td th:text="${#temporals.format(e.enteredAt, 'yyyy-MM-dd HH:mm:ss')}">2026-01-01</td>
+                    <td th:text="${e.studentId}">1</td>
+                    <td th:text="${e.classId}">1</td>
+                    <td th:text="${e.assessmentKey}">MIDTERM</td>
+                    <td th:text="${e.rawScore + ' / ' + e.maxScore}">87/100</td>
+                    <td th:text="${e.gradeLetter}">B+</td>
+                    <td th:text="${e.creditsEarned}">3.000</td>
+                    <td th:text="${e.gpaPoints}">9.900</td>
+                    <td th:text="${e.deltaScore + ' / ' + e.deltaCredits + ' / ' + e.deltaGpaPoints}">-</td>
+                    <td th:text="${e.operationType}">ENTRY</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </article>
+</section>
 
 <script>
 (() => {
@@ -102,6 +76,7 @@
       previousEntryId: fd.get('previousEntryId') ? Number(fd.get('previousEntryId')) : null
     };
 
+    panel.innerHTML = '<p class="text-slate-500">Calculating impact...</p>';
     try {
       const response = await fetch('/api/grades/preview', {
         method: 'POST',
@@ -110,20 +85,24 @@
       });
       const data = await response.json();
       if (!response.ok) {
-        panel.innerHTML = `<p class="status error">Preview failed: ${data.message || 'validation error'}</p>`;
+        panel.innerHTML = `<p class="text-rose-600 font-semibold">Preview failed: ${data.message || 'validation error'}</p>`;
         return;
       }
       panel.innerHTML = `
-        <p><strong>Percent:</strong> ${data.percent}</p>
-        <p><strong>Grade:</strong> ${data.gradeLetter}</p>
-        <p><strong>Credits:</strong> ${data.creditsEarned}</p>
-        <p><strong>GPA Impact:</strong> ${data.gpaImpact}</p>
-        <p><strong>Delta Score:</strong> ${data.deltaScore ?? 'n/a'}</p>
-        <p><strong>Delta Credits:</strong> ${data.deltaCredits ?? 'n/a'}</p>
-        <p><strong>Delta GPA:</strong> ${data.deltaGpaImpact ?? 'n/a'}</p>
+        <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          <p><span class="font-semibold">Percent:</span> ${data.percent}</p>
+          <p><span class="font-semibold">Grade:</span> ${data.gradeLetter}</p>
+          <p><span class="font-semibold">Credits:</span> ${data.creditsEarned}</p>
+          <p><span class="font-semibold">GPA Impact:</span> ${data.gpaImpact}</p>
+        </div>
+        <div class="mt-2 text-sm">
+          <p><span class="font-semibold">Delta Score:</span> ${data.deltaScore ?? 'n/a'}</p>
+          <p><span class="font-semibold">Delta Credits:</span> ${data.deltaCredits ?? 'n/a'}</p>
+          <p><span class="font-semibold">Delta GPA:</span> ${data.deltaGpaImpact ?? 'n/a'}</p>
+        </div>
       `;
     } catch (error) {
-      panel.innerHTML = `<p class="status error">Preview failed: ${error.message}</p>`;
+      panel.innerHTML = `<p class="text-rose-600 font-semibold">Preview failed: ${error.message}</p>`;
     }
   });
 })();

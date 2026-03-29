@@ -1,5 +1,6 @@
 package com.instituteops.store.domain;
 
+import com.instituteops.recommender.domain.RecommenderService;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -21,9 +22,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 public class CatalogController {
 
     private final CatalogService catalogService;
+    private final RecommenderService recommenderService;
 
-    public CatalogController(CatalogService catalogService) {
+    public CatalogController(CatalogService catalogService, RecommenderService recommenderService) {
         this.catalogService = catalogService;
+        this.recommenderService = recommenderService;
     }
 
     @GetMapping("/store")
@@ -35,6 +38,7 @@ public class CatalogController {
     @GetMapping("/store/student")
     public String studentPage(Model model) {
         model.addAttribute("vm", catalogService.studentView());
+        model.addAttribute("recommendations", recommenderService.recommendationsForCurrentUser(5));
         return "store-student";
     }
 

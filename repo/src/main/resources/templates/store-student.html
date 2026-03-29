@@ -1,90 +1,84 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Group Buy</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
-</head>
-<body>
-<main class="shell wide-shell">
-    <div class="row between">
-        <h1>Student Group-Buy Store</h1>
-        <a th:href="@{/dashboard}">Back to dashboard</a>
-    </div>
+<head th:replace="~{fragments/app-shell :: head('Student Group-Buy')}"></head>
+<body th:replace="~{fragments/app-shell :: shell('Student Group-Buy Store', ~{::section})}">
+<section class="space-y-6">
+    <article class="card p-5">
+        <h3 class="mb-4 text-lg font-bold">Recommended For You</h3>
+        <div class="overflow-x-auto">
+            <table class="data-table">
+                <thead><tr><th>Rank</th><th>Item</th><th>Type</th><th>Score</th></tr></thead>
+                <tbody>
+                <tr th:each="r : ${recommendations}">
+                    <td th:text="${r.rank}">1</td>
+                    <td th:text="${r.itemLabel}">MAT-KIT-001-A</td>
+                    <td th:text="${r.itemType}">SKU</td>
+                    <td class="font-semibold text-brand-700" th:text="${r.score}">0.0</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </article>
 
-    <section class="status-block">
-        <h2>Active Campaigns</h2>
-        <div class="grid-2">
-            <article class="compact-form" th:each="c : ${vm.campaigns}">
-                <h3 th:text="${c.campaign.title}">Campaign</h3>
-                <p><strong th:text="${c.campaign.campaignCode}">CMP</strong> for <span th:text="${c.sku.skuCode}">SKU</span></p>
-                <p>Status: <span class="tag" th:text="${c.campaign.status}">ACTIVE</span></p>
-                <p>Tier sample (qty 1): <strong th:text="${c.sampleQuote.unitPrice + ' ' + c.sampleQuote.currency}">29.00 USD</strong></p>
-                <p>Per-student limit: <strong th:text="${c.sampleQuote.purchaseLimitPerStudent}">5</strong></p>
-                <p>Your committed qty: <strong th:text="${c.committedQty}">0</strong></p>
-                <p>Ends: <span th:text="${#temporals.format(c.campaign.endsAt, 'yyyy-MM-dd HH:mm')}">2026-01-01</span></p>
-                <p>Countdown: <span class="countdown" th:attr="data-seconds=${c.countdown.secondsToEnd}">--</span></p>
-                <p>Cutoff in: <span class="countdown" th:attr="data-seconds=${c.countdown.secondsToCutoff}">--</span></p>
+    <article class="card p-5">
+        <h3 class="mb-4 text-lg font-bold">Active Campaigns</h3>
+        <div class="grid gap-4 xl:grid-cols-2">
+            <article class="card p-4" th:each="c : ${vm.campaigns}">
+                <h4 class="text-base font-semibold" th:text="${c.campaign.title}">Campaign</h4>
+                <p class="mt-1 text-sm"><strong th:text="${c.campaign.campaignCode}">CMP</strong> for <span th:text="${c.sku.skuCode}">SKU</span></p>
+                <p class="mt-2 text-sm">Status: <span class="badge badge-warning" th:text="${c.campaign.status}">ACTIVE</span></p>
+                <div class="mt-2 grid gap-1 text-sm text-slate-600">
+                    <p>Tier sample (qty 1): <strong th:text="${c.sampleQuote.unitPrice + ' ' + c.sampleQuote.currency}">29.00 USD</strong></p>
+                    <p>Per-student limit: <strong th:text="${c.sampleQuote.purchaseLimitPerStudent}">5</strong></p>
+                    <p>Your committed qty: <strong th:text="${c.committedQty}">0</strong></p>
+                    <p>Ends: <span th:text="${#temporals.format(c.campaign.endsAt, 'yyyy-MM-dd HH:mm')}">2026-01-01</span></p>
+                    <p>Countdown: <span class="font-semibold text-brand-700" th:attr="data-countdown-seconds=${c.countdown.secondsToEnd}">--</span></p>
+                    <p>Cutoff in: <span class="font-semibold text-amber-700" th:attr="data-countdown-seconds=${c.countdown.secondsToCutoff}">--</span></p>
+                </div>
 
-                <form method="post" th:action="@{/store/student/order}" class="grid-form">
+                <form method="post" th:action="@{/store/student/order}" class="mt-3 grid gap-2 sm:grid-cols-3">
                     <input type="hidden" name="campaignId" th:value="${c.campaign.id}">
-                    <input name="groupCode" placeholder="Existing group code (optional)">
-                    <input type="number" name="quantity" min="1" value="1" required>
-                    <button type="submit">Join or Create Group Order</button>
+                    <input class="field-input" name="groupCode" placeholder="Existing group code (optional)">
+                    <input class="field-input" type="number" name="quantity" min="1" value="1" required>
+                    <button class="btn-primary sm:col-span-3" type="submit">Join or Create Group Order</button>
                 </form>
 
-                <table class="table">
-                    <thead><tr><th>Group</th><th>Status</th><th>Members</th><th>Expires</th></tr></thead>
-                    <tbody>
-                    <tr th:each="g : ${c.groups}">
-                        <td th:text="${g.groupCode}">GRP</td>
-                        <td th:text="${g.status}">FORMING</td>
-                        <td th:text="${g.participantsCurrent + '/' + g.participantsTarget}">1/10</td>
-                        <td th:text="${#temporals.format(g.expiresAt, 'yyyy-MM-dd HH:mm')}">2026-01-01</td>
-                    </tr>
-                    </tbody>
-                </table>
+                <div class="mt-3 overflow-x-auto">
+                    <table class="data-table">
+                        <thead><tr><th>Group</th><th>Status</th><th>Members</th><th>Expires</th></tr></thead>
+                        <tbody>
+                        <tr th:each="g : ${c.groups}">
+                            <td th:text="${g.groupCode}">GRP</td>
+                            <td th:text="${g.status}">FORMING</td>
+                            <td th:text="${g.participantsCurrent + '/' + g.participantsTarget}">1/10</td>
+                            <td th:text="${#temporals.format(g.expiresAt, 'yyyy-MM-dd HH:mm')}">2026-01-01</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
             </article>
         </div>
-    </section>
+    </article>
 
-    <section class="status-block">
-        <h2>My Orders</h2>
-        <table class="table">
-            <thead><tr><th>Order</th><th>Campaign</th><th>Group</th><th>Qty</th><th>Total</th><th>Status</th><th>Void Reason</th></tr></thead>
-            <tbody>
-            <tr th:each="o : ${vm.myOrders}">
-                <td th:text="${o.orderNo}">ORD</td>
-                <td th:text="${o.campaignId}">1</td>
-                <td th:text="${o.groupId}">1</td>
-                <td th:text="${o.quantity}">1</td>
-                <td th:text="${o.totalAmount}">29.00</td>
-                <td th:text="${o.orderStatus}">PENDING_GROUP</td>
-                <td th:text="${o.voidReason}">-</td>
-            </tr>
-            </tbody>
-        </table>
-    </section>
-</main>
-
-<script>
-    document.querySelectorAll('.countdown').forEach(function (el) {
-        var seconds = parseInt(el.dataset.seconds || '0', 10);
-        function render() {
-            if (seconds <= 0) {
-                el.textContent = '00:00:00';
-                return;
-            }
-            var h = Math.floor(seconds / 3600);
-            var m = Math.floor((seconds % 3600) / 60);
-            var s = seconds % 60;
-            el.textContent = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
-            seconds -= 1;
-            setTimeout(render, 1000);
-        }
-        render();
-    });
-</script>
+    <article class="card p-5">
+        <h3 class="mb-4 text-lg font-bold">My Orders</h3>
+        <div class="overflow-x-auto">
+            <table class="data-table">
+                <thead><tr><th>Order</th><th>Campaign</th><th>Group</th><th>Qty</th><th>Total</th><th>Status</th><th>Void Reason</th></tr></thead>
+                <tbody>
+                <tr th:each="o : ${vm.myOrders}">
+                    <td th:text="${o.orderNo}">ORD</td>
+                    <td th:text="${o.campaignId}">1</td>
+                    <td th:text="${o.groupId}">1</td>
+                    <td th:text="${o.quantity}">1</td>
+                    <td th:text="${o.totalAmount}">29.00</td>
+                    <td><span class="badge badge-success" th:text="${o.orderStatus}">PENDING_GROUP</span></td>
+                    <td th:text="${o.voidReason}">-</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </article>
+</section>
 </body>
 </html>

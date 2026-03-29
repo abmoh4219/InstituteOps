@@ -4,23 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InstituteOps Login</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
-<body>
-<main class="shell auth-shell">
-    <h1>InstituteOps</h1>
-    <p class="subtitle">Offline administration console</p>
-    <form method="post" th:action="@{/login}" class="auth-form">
-        <label for="username">Username</label>
-        <input id="username" name="username" type="text" autocomplete="username" required autofocus>
+<body class="min-h-screen bg-slate-100 font-['Plus_Jakarta_Sans'] text-slate-800">
+<main class="mx-auto grid min-h-screen max-w-6xl items-center gap-8 px-6 py-10 lg:grid-cols-2">
+    <section class="hidden rounded-3xl bg-gradient-to-br from-emerald-500 to-emerald-700 p-10 text-white shadow-2xl lg:block">
+        <h1 class="text-4xl font-extrabold tracking-tight">InstituteOps</h1>
+        <p class="mt-4 text-base text-emerald-50">Modern offline-first operations suite for students, inventory, procurement, group-buy, and analytics.</p>
+        <ul class="mt-8 space-y-3 text-sm text-emerald-50">
+            <li>• Secure role-based access for all teams</li>
+            <li>• Real-time procurement + stock workflows</li>
+            <li>• Collaborative filtering recommendations</li>
+        </ul>
+    </section>
 
-        <label for="password">Password</label>
-        <input id="password" name="password" type="password" autocomplete="current-password" required>
-
-        <button type="submit">Sign In</button>
-    </form>
-    <p th:if="${param.error}" class="status error">Invalid username or password.</p>
-    <p th:if="${param.logout}" class="status">Signed out.</p>
+    <section class="rounded-3xl border border-slate-200 bg-white p-8 shadow-xl">
+        <p class="text-sm font-semibold text-emerald-700">Welcome back</p>
+        <h2 class="mt-1 text-3xl font-extrabold tracking-tight">Sign in to InstituteOps</h2>
+        <p class="mt-2 text-sm text-slate-500">Press Enter to submit. Keyboard search is available after sign in (Ctrl+K).</p>
+        <form method="post" th:action="@{/login}" class="mt-6 space-y-4">
+            <div>
+                <label for="username" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Username</label>
+                <input id="username" name="username" type="text" autocomplete="username" required autofocus class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-100">
+            </div>
+            <div>
+                <label for="password" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Password</label>
+                <input id="password" name="password" type="password" autocomplete="current-password" required class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-100">
+            </div>
+            <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">Sign In</button>
+        </form>
+        <p th:if="${param.error}" class="mt-4 rounded-xl bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">Invalid username or password.</p>
+        <p th:if="${param.logout}" class="mt-4 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">Signed out successfully.</p>
+    </section>
 </main>
 </body>
 </html>
