@@ -53,6 +53,7 @@ services:
       app:
         condition: service_started
     environment:
+      JAVA_HOME: /opt/java/openjdk
       TEST_DB_HOST: mysql
       TEST_DB_PORT: 3306
       TEST_DB_NAME: instituteops
