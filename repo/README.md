@@ -12,7 +12,7 @@ What this starts:
 
 - `mysql`: MySQL 8.4
 - `app`: Spring Boot application at `http://localhost:8080`
-- `tests`: `run-test.sh` (executes `./mvnw -B verify -Pintegration-tests`)
+- `tests`: `run_test.sh` (executes `./mvnw -B verify -Pintegration-tests`)
 
 `tests` service logs stream directly in terminal during `docker compose up` (Surefire/Failsafe output is visible).
 

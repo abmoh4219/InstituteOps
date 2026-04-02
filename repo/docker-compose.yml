@@ -62,7 +62,7 @@ services:
     volumes:
       - ./:/workspace
       - maven_cache:/root/.m2
-    command: ./run-test.sh
+    command: ./run_test.sh
 
 volumes:
   mysql_data:

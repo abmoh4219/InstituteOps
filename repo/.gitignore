@@ -46,3 +46,6 @@ temp/
 # Docker local volumes/data
 mysql_data/
 uploads_data/
+
+convert_ai_session.py
+session.jsonl
