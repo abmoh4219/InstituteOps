@@ -2,6 +2,7 @@ package com.instituteops.security;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -34,10 +35,16 @@ class AuditFixVerificationTest {
 
     private Long student1Id;
     private Long student2Id;
+    private Long assignedClassId;
+    private Long unassignedClassId;
 
     @BeforeEach
     void setUp() {
         jdbcTemplate.execute("ALTER TABLE classes ADD COLUMN IF NOT EXISTS instructor_user_id BIGINT");
+        jdbcTemplate.update("DELETE FROM homework_attachments");
+        jdbcTemplate.update("DELETE FROM attendance_records");
+        jdbcTemplate.update("DELETE FROM payment_transactions");
+        jdbcTemplate.update("DELETE FROM instructor_comments");
         jdbcTemplate.update("DELETE FROM enrollments");
         studentProfileLookupRepository.deleteAll();
 
@@ -60,10 +67,10 @@ class AuditFixVerificationTest {
         student2Id = student2.getId();
 
         seedTestUsers();
-        seedInstructorWithAssignment(student1Id);
+        seedClassFixtures();
     }
 
-    // ===== Finding 1: Instructor student list isolation =====
+    // ===== Instructor student list isolation =====
 
     @Test
     @WithMockUser(username = "instructor", roles = "INSTRUCTOR")
@@ -107,7 +114,7 @@ class AuditFixVerificationTest {
             .andExpect(jsonPath("$.length()").value(2));
     }
 
-    // ===== Finding 4: Trace ID consistency =====
+    // ===== Trace ID consistency =====
 
     @Test
     @WithMockUser(username = "sysadmin", roles = "SYSTEM_ADMIN")
@@ -118,23 +125,19 @@ class AuditFixVerificationTest {
             .andExpect(jsonPath("$.traceId").isNotEmpty());
     }
 
-    // ===== Finding 5: Governance data-access audit logging =====
+    // ===== Governance data-access audit logging =====
 
     @Test
     @WithMockUser(username = "sysadmin", roles = "SYSTEM_ADMIN")
     void governanceExport_isAuditLogged() throws Exception {
         Long countBefore = jdbcTemplate.queryForObject(
-            "SELECT COUNT(*) FROM data_access_logs WHERE access_type = 'GOVERNANCE_EXPORT'",
-            Long.class
-        );
+            "SELECT COUNT(*) FROM data_access_logs WHERE access_type = 'GOVERNANCE_EXPORT'", Long.class);
 
         mockMvc.perform(get("/api/governance/students/export"))
             .andExpect(status().isOk());
 
         Long countAfter = jdbcTemplate.queryForObject(
-            "SELECT COUNT(*) FROM data_access_logs WHERE access_type = 'GOVERNANCE_EXPORT'",
-            Long.class
-        );
+            "SELECT COUNT(*) FROM data_access_logs WHERE access_type = 'GOVERNANCE_EXPORT'", Long.class);
         org.assertj.core.api.Assertions.assertThat(countAfter).isGreaterThan(countBefore);
     }
 
@@ -142,63 +145,138 @@ class AuditFixVerificationTest {
     @WithMockUser(username = "sysadmin", roles = "SYSTEM_ADMIN")
     void governanceHistory_isAuditLogged() throws Exception {
         Long countBefore = jdbcTemplate.queryForObject(
-            "SELECT COUNT(*) FROM data_access_logs WHERE access_type = 'GOVERNANCE_HISTORY_READ'",
-            Long.class
-        );
+            "SELECT COUNT(*) FROM data_access_logs WHERE access_type = 'GOVERNANCE_HISTORY_READ'", Long.class);
 
         mockMvc.perform(get("/api/governance/students/" + student1Id + "/history"))
             .andExpect(status().isOk());
 
         Long countAfter = jdbcTemplate.queryForObject(
-            "SELECT COUNT(*) FROM data_access_logs WHERE access_type = 'GOVERNANCE_HISTORY_READ'",
-            Long.class
-        );
+            "SELECT COUNT(*) FROM data_access_logs WHERE access_type = 'GOVERNANCE_HISTORY_READ'", Long.class);
         org.assertj.core.api.Assertions.assertThat(countAfter).isGreaterThan(countBefore);
     }
 
-    // ===== Finding 6: Homework checksum context-safe uniqueness =====
+    // ===== Homework checksum context-safe uniqueness =====
 
     @Test
-    @WithMockUser(username = "sysadmin", roles = "SYSTEM_ADMIN")
     void twoStudents_canSubmitIdenticalHomeworkChecksum() {
+        Long userId = jdbcTemplate.queryForObject("SELECT id FROM users WHERE username = 'sysadmin'", Long.class);
         String checksum = "a".repeat(64);
         jdbcTemplate.update(
-            "INSERT INTO homework_attachments (student_id, original_file_name, stored_file_name, mime_type, file_size_bytes, sha256_checksum, upload_path, uploaded_by, uploaded_at) " +
-                "VALUES (?, 'test.pdf', 'stored1.pdf', 'application/pdf', 1024, ?, '/tmp/stored1.pdf', 1, CURRENT_TIMESTAMP())",
-            student1Id, checksum
-        );
+            "INSERT INTO homework_attachments (student_id, original_file_name, stored_file_name, mime_type, file_size_bytes, sha256_checksum, upload_path, uploaded_by, uploaded_at) "
+                + "VALUES (?, 'test.pdf', 'stored1.pdf', 'application/pdf', 1024, ?, '/tmp/stored1.pdf', ?, CURRENT_TIMESTAMP())",
+            student1Id, checksum, userId);
 
-        // Second student submitting the same file should succeed
         jdbcTemplate.update(
-            "INSERT INTO homework_attachments (student_id, original_file_name, stored_file_name, mime_type, file_size_bytes, sha256_checksum, upload_path, uploaded_by, uploaded_at) " +
-                "VALUES (?, 'test.pdf', 'stored2.pdf', 'application/pdf', 1024, ?, '/tmp/stored2.pdf', 1, CURRENT_TIMESTAMP())",
-            student2Id, checksum
-        );
+            "INSERT INTO homework_attachments (student_id, original_file_name, stored_file_name, mime_type, file_size_bytes, sha256_checksum, upload_path, uploaded_by, uploaded_at) "
+                + "VALUES (?, 'test.pdf', 'stored2.pdf', 'application/pdf', 1024, ?, '/tmp/stored2.pdf', ?, CURRENT_TIMESTAMP())",
+            student2Id, checksum, userId);
 
-        Long count = jdbcTemplate.queryForObject(
-            "SELECT COUNT(*) FROM homework_attachments WHERE sha256_checksum = ?",
-            Long.class, checksum
-        );
+        Long count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM homework_attachments WHERE sha256_checksum = ?", Long.class, checksum);
         org.assertj.core.api.Assertions.assertThat(count).isEqualTo(2L);
     }
 
     @Test
-    @WithMockUser(username = "sysadmin", roles = "SYSTEM_ADMIN")
     void sameStudent_cannotSubmitDuplicateChecksum() {
+        Long userId = jdbcTemplate.queryForObject("SELECT id FROM users WHERE username = 'sysadmin'", Long.class);
         String checksum = "b".repeat(64);
         jdbcTemplate.update(
-            "INSERT INTO homework_attachments (student_id, original_file_name, stored_file_name, mime_type, file_size_bytes, sha256_checksum, upload_path, uploaded_by, uploaded_at) " +
-                "VALUES (?, 'test.pdf', 'stored1.pdf', 'application/pdf', 1024, ?, '/tmp/stored1.pdf', 1, CURRENT_TIMESTAMP())",
-            student1Id, checksum
-        );
+            "INSERT INTO homework_attachments (student_id, original_file_name, stored_file_name, mime_type, file_size_bytes, sha256_checksum, upload_path, uploaded_by, uploaded_at) "
+                + "VALUES (?, 'test.pdf', 'stored1.pdf', 'application/pdf', 1024, ?, '/tmp/stored1.pdf', ?, CURRENT_TIMESTAMP())",
+            student1Id, checksum, userId);
 
         org.assertj.core.api.Assertions.assertThatThrownBy(() ->
             jdbcTemplate.update(
-                "INSERT INTO homework_attachments (student_id, original_file_name, stored_file_name, mime_type, file_size_bytes, sha256_checksum, upload_path, uploaded_by, uploaded_at) " +
-                    "VALUES (?, 'test2.pdf', 'stored2.pdf', 'application/pdf', 1024, ?, '/tmp/stored2.pdf', 1, CURRENT_TIMESTAMP())",
-                student1Id, checksum
-            )
+                "INSERT INTO homework_attachments (student_id, original_file_name, stored_file_name, mime_type, file_size_bytes, sha256_checksum, upload_path, uploaded_by, uploaded_at) "
+                    + "VALUES (?, 'test2.pdf', 'stored2.pdf', 'application/pdf', 1024, ?, '/tmp/stored2.pdf', ?, CURRENT_TIMESTAMP())",
+                student1Id, checksum, userId)
         ).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+    }
+
+    // ===== Instructor mutation denial (Fix 2) =====
+
+    @Test
+    @WithMockUser(username = "instructor", roles = "INSTRUCTOR")
+    void instructor_cannotPostPayment() throws Exception {
+        mockMvc.perform(post("/student/{id}/payments", student1Id)
+                .param("paymentMethod", "CASH")
+                .param("amount", "50.00")
+                .with(csrf()))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor", roles = "INSTRUCTOR")
+    void instructor_cannotChangeStudentStatus() throws Exception {
+        mockMvc.perform(post("/student/{id}/status", student1Id)
+                .param("status", "SUSPENDED")
+                .with(csrf()))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor", roles = "INSTRUCTOR")
+    void instructor_cannotDeleteStudent() throws Exception {
+        mockMvc.perform(post("/student/{id}/delete", student1Id)
+                .with(csrf()))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor", roles = "INSTRUCTOR")
+    void instructor_cannotRestoreStudent() throws Exception {
+        mockMvc.perform(post("/student/{id}/restore", student1Id)
+                .with(csrf()))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor", roles = "INSTRUCTOR")
+    void instructor_cannotCreateStudent() throws Exception {
+        mockMvc.perform(post("/student")
+                .param("studentNo", "NEW-001")
+                .param("firstName", "New")
+                .param("lastName", "Student")
+                .param("dateOfBirth", "2005-01-01")
+                .with(csrf()))
+            .andExpect(status().isForbidden());
+    }
+
+    // ===== Class session object-level auth (Fix 4) =====
+
+    @Test
+    @WithMockUser(username = "audit-s1", roles = "STUDENT")
+    void student_canAccessEnrolledClassSessions() throws Exception {
+        StudentProfileEntity mine = studentProfileLookupRepository.findByStudentNoIgnoreCaseAndDeletedAtIsNull("audit-s1").orElseThrow();
+        mockMvc.perform(get("/api/classes/{classId}/sessions", assignedClassId))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "audit-s1", roles = "STUDENT")
+    void student_cannotAccessUnenrolledClassSessions() throws Exception {
+        mockMvc.perform(get("/api/classes/{classId}/sessions", unassignedClassId))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor", roles = "INSTRUCTOR")
+    void instructor_cannotAccessUnassignedClassSessions() throws Exception {
+        mockMvc.perform(get("/api/classes/{classId}/sessions", unassignedClassId))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor", roles = "INSTRUCTOR")
+    void instructor_canAccessAssignedClassSessions() throws Exception {
+        mockMvc.perform(get("/api/classes/{classId}/sessions", assignedClassId))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "sysadmin", roles = "SYSTEM_ADMIN")
+    void admin_canAccessAnyClassSessions() throws Exception {
+        mockMvc.perform(get("/api/classes/{classId}/sessions", unassignedClassId))
+            .andExpect(status().isOk());
     }
 
     // ===== Helpers =====
@@ -213,28 +291,27 @@ class AuditFixVerificationTest {
         }) {
             jdbcTemplate.update(
                 "MERGE INTO users (username, password_hash, display_name, active) KEY(username) VALUES (?, ?, ?, ?)",
-                user[0], "hashed", user[1], true
-            );
+                user[0], "hashed", user[1], true);
         }
     }
 
-    private void seedInstructorWithAssignment(Long studentId) {
-        jdbcTemplate.update(
-            "MERGE INTO users (username, password_hash, display_name, active) KEY(username) VALUES (?, ?, ?, ?)",
-            "instructor", "hashed", "Instructor", true
-        );
+    private void seedClassFixtures() {
         Long instructorUserId = jdbcTemplate.queryForObject("SELECT id FROM users WHERE username = ?", Long.class, "instructor");
 
+        // Assigned class (instructor teaches, student1 enrolled)
         jdbcTemplate.update(
             "MERGE INTO classes (class_code, class_name, instructor_user_id) KEY(class_code) VALUES (?, ?, ?)",
-            "AUDIT-TST-CLASS", "Audit Test Class", instructorUserId
-        );
-        Long classId = jdbcTemplate.queryForObject("SELECT id FROM classes WHERE class_code = ?", Long.class, "AUDIT-TST-CLASS");
-        jdbcTemplate.update("UPDATE classes SET instructor_user_id = ? WHERE id = ?", instructorUserId, classId);
-
+            "AUDIT-TST-CLASS", "Audit Test Class", instructorUserId);
+        assignedClassId = jdbcTemplate.queryForObject("SELECT id FROM classes WHERE class_code = ?", Long.class, "AUDIT-TST-CLASS");
+        jdbcTemplate.update("UPDATE classes SET instructor_user_id = ? WHERE id = ?", instructorUserId, assignedClassId);
         jdbcTemplate.update(
             "INSERT INTO enrollments (student_id, class_id, enrollment_status, enrolled_at, deleted_at) VALUES (?, ?, 'ENROLLED', CURRENT_TIMESTAMP(), NULL)",
-            studentId, classId
-        );
+            student1Id, assignedClassId);
+
+        // Unassigned class (no instructor, no enrollment)
+        jdbcTemplate.update(
+            "MERGE INTO classes (class_code, class_name, instructor_user_id) KEY(class_code) VALUES (?, ?, ?)",
+            "AUDIT-UNASSIGNED", "Unassigned Class", null);
+        unassignedClassId = jdbcTemplate.queryForObject("SELECT id FROM classes WHERE class_code = ?", Long.class, "AUDIT-UNASSIGNED");
     }
 }

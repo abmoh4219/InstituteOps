@@ -124,6 +124,7 @@ class OverrideReasonCodeEntity {
 
 @Entity
 @Table(name = "grade_ledger_entries")
+@org.hibernate.annotations.Immutable
 class GradeLedgerEntryEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

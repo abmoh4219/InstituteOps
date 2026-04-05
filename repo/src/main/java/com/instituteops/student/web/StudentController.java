@@ -213,7 +213,8 @@ public class StudentController {
 
     @ResponseBody
     @GetMapping("/api/classes/{classId}/sessions")
-    public List<ClassSessionRefEntity> apiSessions(@PathVariable Long classId) {
+    public List<ClassSessionRefEntity> apiSessions(@PathVariable Long classId, Authentication authentication) {
+        studentModuleService.assertCanAccessClass(authentication, classId);
         return studentModuleService.sessionsForClass(classId);
     }
 

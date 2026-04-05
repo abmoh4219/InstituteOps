@@ -107,6 +107,20 @@ public class SecurityConfig {
                     RoleCode.INSTRUCTOR.name(),
                     RoleCode.STUDENT.name()
                 )
+                .requestMatchers(HttpMethod.POST, "/student/*/comments").hasAnyRole(
+                    RoleCode.SYSTEM_ADMIN.name(),
+                    RoleCode.REGISTRAR_FINANCE_CLERK.name(),
+                    RoleCode.INSTRUCTOR.name()
+                )
+                .requestMatchers(HttpMethod.POST, "/student/*/attendance").hasAnyRole(
+                    RoleCode.SYSTEM_ADMIN.name(),
+                    RoleCode.REGISTRAR_FINANCE_CLERK.name(),
+                    RoleCode.INSTRUCTOR.name()
+                )
+                .requestMatchers(HttpMethod.POST, "/student/**").hasAnyRole(
+                    RoleCode.SYSTEM_ADMIN.name(),
+                    RoleCode.REGISTRAR_FINANCE_CLERK.name()
+                )
                 .requestMatchers("/student/**", "/api/students/**", "/api/classes/**").hasAnyRole(
                     RoleCode.SYSTEM_ADMIN.name(),
                     RoleCode.REGISTRAR_FINANCE_CLERK.name(),

@@ -172,10 +172,14 @@ public class GovernanceService {
                     existing.setLastName(lastName);
                     existing.setPreferredName(nullable(readField(record, schema.preferredName())));
                     existing.setDateOfBirth(dob);
-                    existing.setContactEmail(nullable(readField(record, schema.contactEmail())));
-                    existing.setContactPhone(nullable(readField(record, schema.contactPhone())));
+                    String email = nullable(readField(record, schema.contactEmail()));
+                    String phone = nullable(readField(record, schema.contactPhone()));
+                    existing.setContactEmail(email);
+                    existing.setContactPhone(phone);
                     existing.setContactAddress(nullable(readField(record, schema.contactAddress())));
                     existing.setEmergencyContact(nullable(readField(record, schema.emergencyContact())));
+                    existing.setMaskedEmail(maskEmail(email));
+                    existing.setMaskedPhone(maskPhone(phone));
                     studentProfileRepository.save(existing);
                     governanceAuditService.recordChange(STUDENT_ENTITY, existing.getId(), "UPDATE", before, studentSnapshot(existing), "CSV_IMPORT_UPDATE");
                     updated++;
@@ -187,10 +191,14 @@ public class GovernanceService {
                     createdStudent.setPreferredName(nullable(readField(record, schema.preferredName())));
                     createdStudent.setDateOfBirth(dob);
                     createdStudent.setStatus("ACTIVE");
-                    createdStudent.setContactEmail(nullable(readField(record, schema.contactEmail())));
-                    createdStudent.setContactPhone(nullable(readField(record, schema.contactPhone())));
+                    String newEmail = nullable(readField(record, schema.contactEmail()));
+                    String newPhone = nullable(readField(record, schema.contactPhone()));
+                    createdStudent.setContactEmail(newEmail);
+                    createdStudent.setContactPhone(newPhone);
                     createdStudent.setContactAddress(nullable(readField(record, schema.contactAddress())));
                     createdStudent.setEmergencyContact(nullable(readField(record, schema.emergencyContact())));
+                    createdStudent.setMaskedEmail(maskEmail(newEmail));
+                    createdStudent.setMaskedPhone(maskPhone(newPhone));
                     studentProfileRepository.save(createdStudent);
                     governanceAuditService.recordChange(STUDENT_ENTITY, createdStudent.getId(), "CREATE", null, studentSnapshot(createdStudent), "CSV_IMPORT_CREATE");
                     created++;
@@ -303,7 +311,22 @@ public class GovernanceService {
         int purged = 0;
         for (RecycleBinEntity entry : recycleBinRepository.findByRestoredFalseAndPurgeAfterBefore(LocalDateTime.now())) {
             if (STUDENT_ENTITY.equals(entry.getEntityType())) {
-                studentProfileRepository.findById(entry.getEntityId()).ifPresent(studentProfileRepository::delete);
+                studentProfileRepository.findById(entry.getEntityId()).ifPresent(student -> {
+                    Long sid = student.getId();
+                    jdbcTemplate.update("DELETE FROM homework_attachments WHERE student_id = ?", sid);
+                    jdbcTemplate.update("DELETE FROM instructor_comments WHERE student_id = ?", sid);
+                    jdbcTemplate.update("DELETE FROM payment_transactions WHERE student_id = ?", sid);
+                    List<Long> enrollmentIds = jdbcTemplate.queryForList(
+                        "SELECT id FROM enrollments WHERE student_id = ?", Long.class, sid);
+                    if (!enrollmentIds.isEmpty()) {
+                        for (Long eid : enrollmentIds) {
+                            jdbcTemplate.update("DELETE FROM attendance_records WHERE enrollment_id = ?", eid);
+                        }
+                        jdbcTemplate.update("DELETE FROM enrollments WHERE student_id = ?", sid);
+                    }
+                    jdbcTemplate.update("DELETE FROM grade_ledger_entries WHERE student_id = ?", sid);
+                    studentProfileRepository.delete(student);
+                });
                 purged++;
             }
             recycleBinRepository.delete(entry);
@@ -469,6 +492,27 @@ public class GovernanceService {
             return null;
         }
         return record.get(header);
+    }
+
+    private static String maskEmail(String email) {
+        if (email == null || email.isBlank() || !email.contains("@")) {
+            return null;
+        }
+        String[] parts = email.split("@", 2);
+        String local = parts[0];
+        String masked = local.length() <= 2 ? "**" : local.substring(0, 2) + "***";
+        return masked + "@" + parts[1];
+    }
+
+    private static String maskPhone(String phone) {
+        if (phone == null || phone.isBlank()) {
+            return null;
+        }
+        String normalized = phone.replaceAll("\\D", "");
+        if (normalized.length() <= 4) {
+            return "****";
+        }
+        return "***-***-" + normalized.substring(normalized.length() - 4);
     }
 
     private static int levenshtein(String a, String b) {

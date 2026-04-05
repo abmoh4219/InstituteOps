@@ -785,7 +785,7 @@ class SecurityIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = "registrar", roles = "REGISTRAR_FINANCE_CLERK")
     void staffUiShowsStaffOnlyActions() throws Exception {
         Long student1Id = studentProfileLookupRepository.findByStudentNoIgnoreCaseAndDeletedAtIsNull("student1").orElseThrow().getId();
 

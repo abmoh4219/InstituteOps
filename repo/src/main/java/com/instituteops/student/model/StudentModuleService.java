@@ -458,10 +458,43 @@ public class StudentModuleService {
         if (isStudentPrincipal(authentication)) {
             throw new AccessDeniedException("Students cannot modify authoritative student records");
         }
+        if (hasAnyRole(authentication, "ROLE_INSTRUCTOR")) {
+            throw new AccessDeniedException("Instructors cannot modify student lifecycle or payment records");
+        }
     }
 
     public void assertCanUploadHomework(Authentication authentication, Long studentId) {
         assertCanAccessStudent(authentication, studentId);
+    }
+
+    public void assertCanAccessClass(Authentication authentication, Long classId) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AccessDeniedException("Authentication required");
+        }
+        if (hasAnyRole(authentication, "ROLE_SYSTEM_ADMIN", "ROLE_REGISTRAR_FINANCE_CLERK")) {
+            return;
+        }
+        if (isStudentPrincipal(authentication)) {
+            StudentProfileEntity mine = resolveStudentForPrincipal(authentication);
+            boolean enrolled = enrollmentRecordRepository.findByStudentIdAndDeletedAtIsNullOrderByEnrolledAtDesc(mine.getId())
+                .stream().anyMatch(e -> classId.equals(e.getClassId()));
+            if (!enrolled) {
+                throw new AccessDeniedException("Student is not enrolled in this class");
+            }
+            return;
+        }
+        if (hasAnyRole(authentication, "ROLE_INSTRUCTOR")) {
+            Long instructorUserId = userRepository.findIdByUsername(authentication.getName())
+                .orElseThrow(() -> new AccessDeniedException("Instructor account not linked"));
+            Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM classes WHERE id = ? AND instructor_user_id = ?",
+                Integer.class, classId, instructorUserId);
+            if (count == null || count == 0) {
+                throw new AccessDeniedException("Instructor is not assigned to this class");
+            }
+            return;
+        }
+        throw new AccessDeniedException("Role not permitted to access class sessions");
     }
 
     public void assertCanCreateStudent(Authentication authentication) {
@@ -471,10 +504,15 @@ public class StudentModuleService {
         if (isStudentPrincipal(authentication)) {
             throw new AccessDeniedException("Students cannot create student profiles");
         }
+        if (hasAnyRole(authentication, "ROLE_INSTRUCTOR")) {
+            throw new AccessDeniedException("Instructors cannot create student profiles");
+        }
     }
 
     public boolean canMutateStudentRecord(Authentication authentication) {
-        return authentication != null && authentication.isAuthenticated() && !isStudentPrincipal(authentication);
+        return authentication != null && authentication.isAuthenticated()
+            && !isStudentPrincipal(authentication)
+            && !hasAnyRole(authentication, "ROLE_INSTRUCTOR");
     }
 
     public Long currentPrincipalStudentId(Authentication authentication) {
